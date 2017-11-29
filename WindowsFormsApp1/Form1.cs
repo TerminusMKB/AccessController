@@ -88,6 +88,12 @@ namespace WindowsFormsApp1
 
 
             Program.ZApi.init();
+            List<ControllerInfoShort> items = Program.ZApi.GetControllers();
+            log.Info("Total controllers: " + items.Count);
+
+            Program.ZApi.addKey(31351, "213,15275");
+            Program.ZApi.getKeys(31351);
+
 
             //UInt32 nVersion = ZGIntf.ZG_GetVersion();
             //long z = 0;
@@ -113,7 +119,7 @@ namespace WindowsFormsApp1
                 return;
             }
             g_nCtrCount = 0;*/
-            int hr = ZGIntf.ZG_Cvt_EnumControllers(Program.ZApi.ConverterHandler, EnumCtrsCB, IntPtr.Zero);
+            /*int hr = ZGIntf.ZG_Cvt_EnumControllers(Program.ZApi.ConverterHandler, EnumCtrsCB, IntPtr.Zero);
             if (hr < 0)
             {
                 log.Fatal("Ошибка ZG_Cvt_EnumControllers (" + hr + ").");
@@ -126,7 +132,7 @@ namespace WindowsFormsApp1
             else
             {
                 log.Info("Контроллеры не найдены.");
-            }
+            }*/
 
 
 
