@@ -100,11 +100,16 @@ namespace Z
             return tmpControllerInfoShortList;
         }
 
-        public ControllerKey[] getKeys(ushort serialNumber) {
+        public ControllerKey[] getKeys(ushort serialNumber)
+        {
+            return getKeys(serialNumber, 0, 2024);
+        }
+
+        public ControllerKey[] getKeys(ushort serialNumber, int keyIndex, int keyCount) {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
-            ZG_CTR_KEY[] aKeys = new ZG_CTR_KEY[2024];
-            ControllerKey[] keyMap = new ControllerKey[2024];
+            ZG_CTR_KEY[] aKeys = new ZG_CTR_KEY[keyCount];
+            ControllerKey[] keyMap = new ControllerKey[keyCount];
             try
             {
                 //Открываем контроллер
@@ -117,21 +122,21 @@ namespace Z
                     throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
                 }
                 //Читаем список карт
-                hr = ZGIntf.ZG_Ctr_ReadKeys(ControllerHandler, 0, aKeys, 2024, null, IntPtr.Zero, 0);
+                hr = ZGIntf.ZG_Ctr_ReadKeys(ControllerHandler, keyIndex, aKeys, keyCount, null, IntPtr.Zero, 0);
                 if (hr < 0) {
                     log.Fatal("Ошибка ZG_Ctr_ReadKeys (" + hr + ")");
                     throw new ZCommonException("Ошибка ZG_Ctr_ReadKeys").setErrorCode(hr);
                 }
-                for (int i = 0; i < 2024; i++) {
+                for (int i = 0; i < keyCount; i++) {
                     if (aKeys[i].nType.Equals(ZG_CTR_KEY_TYPE.ZG_KEY_NORMAL))
                     {
                         keyMap[i] = new ControllerKey();
                         keyMap[i].name = CardArrayToString(aKeys[i].rNum);
                         keyMap[i].isErased = aKeys[i].fErased;
-                        log.Info("Key [" + i + "]: " + keyMap[i].name);
+                        //log.Info("Key [" + i + "]: " + keyMap[i].name);
                     }
                     else {
-                        log.Info("Key [" + i + "]: ---");
+                        //log.Info("Key [" + i + "]: ---");
                     }
                     //log.Info("Key: " + i + ", " + aKeys[i].fErased + ", " + aKeys[i].nType + ", " + CardArrayToString(aKeys[i].rNum) + " ("+ aKeys[i].rNum[0] + "-"+ aKeys[i].rNum[1] + "-"+ aKeys[i].rNum[2] + "-"+ aKeys[i].rNum[3] + "-"+ aKeys[i].rNum[4] + "-"+ aKeys[i].rNum[5] + ")");
                     //byte[] res = new byte[16];
@@ -148,7 +153,7 @@ namespace Z
             }
         }
 
-        public void addKey(ushort serialNumber, String name) {
+        public void addKey(ushort serialNumber, int keyIndex, String name) {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
             try
@@ -162,13 +167,24 @@ namespace Z
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
                     throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
                 }
+                //Пишем ключ
                 ZG_CTR_KEY[] aKeys = new ZG_CTR_KEY[1];
                 aKeys[0].nType = ZG_CTR_KEY_TYPE.ZG_KEY_NORMAL;
                 aKeys[0].rNum = CardStringToArray(name);
-                hr = ZGIntf.ZG_Ctr_WriteKeys(ControllerHandler, -1, aKeys, 1, null, default(IntPtr), 0, true);
+                int _keyIndex = -1;
+                if (keyIndex.Equals(-1)) {
+                    hr = ZGIntf.ZG_Ctr_GetKeyTopIndex(ControllerHandler, ref _keyIndex, 0);
+                    if (hr < 0)
+                    {
+                        log.Fatal("Ошибка ZG_Ctr_GetKeyTopIndex (" + hr + ")");
+                        throw new ZCommonException("Ошибка ZG_Ctr_GetKeyTopIndex").setErrorCode(hr);
+                    }
+                }
+                log.Info("New key index: " + _keyIndex);
+                hr = ZGIntf.ZG_Ctr_WriteKeys(ControllerHandler, _keyIndex, aKeys, 1, null, default(IntPtr), 0, true);
                 if (hr < 0)
                 {
-                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    log.Fatal("Ошибка ZG_Ctr_WriteKeys (" + hr + ")");
                     throw new ZCommonException("Ошибка ZG_Ctr_WriteKeys").setErrorCode(hr);
                 }
             }
@@ -182,7 +198,36 @@ namespace Z
             }
         }
 
-        public void deleteKey(ushort serialNumber) {
+        public void deleteKey(ushort serialNumber, int keyIndex) {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                bool m_fProximity = true;// ((ControllerInfo.nFlags & ZGIntf.ZG_CTR_F_PROXIMITY) != 0);
+                log.Info("Proximity: " + m_fProximity);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Удаляем ключ
+                hr = ZGIntf.ZG_Ctr_ClearKeys(ControllerHandler, keyIndex, 1, null, default(IntPtr), 0, true);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_ClearKeys (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_ClearKeys").setErrorCode(hr);
+                }
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
         }
 
         public List<ControllerEvent> getEvents(ushort serialNumber) {

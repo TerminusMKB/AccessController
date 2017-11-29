@@ -88,68 +88,10 @@ namespace WindowsFormsApp1
 
 
             Program.ZApi.init();
-            List<ControllerInfoShort> items = Program.ZApi.GetControllers();
-            log.Info("Total controllers: " + items.Count);
-
-            Program.ZApi.addKey(31351, "213,15275");
-            Program.ZApi.getKeys(31351);
-
-
-            //UInt32 nVersion = ZGIntf.ZG_GetVersion();
-            //long z = 0;
-            //log.Info("Found: " + z);
-
-            /*int hr;
-            hr = ZGIntf.ZG_Initialize(ZPIntf.ZP_IF_NO_MSG_LOOP);
-            if (hr < 0)
-            {
-                log.Fatal("Ошибка ZG_Initialize (" + hr + ").");
-                return;
-            }
-            ZG_CVT_INFO rInfo = new ZG_CVT_INFO();
-            ZG_CVT_OPEN_PARAMS rOp = new ZG_CVT_OPEN_PARAMS();
-            rOp.nPortType = ZP_PORT_TYPE.ZP_PORT_IP;
-            rOp.pszName = @"192.168.101.12:7000";
-            rOp.nSpeed = ZG_CVT_SPEED.ZG_SPEED_57600;
-
-            hr = ZGIntf.ZG_Cvt_Open(ref m_hCvt, ref rOp, rInfo);
-            if (hr < 0)
-            {
-                log.Fatal("Unable to connect");
-                return;
-            }
-            g_nCtrCount = 0;*/
-            /*int hr = ZGIntf.ZG_Cvt_EnumControllers(Program.ZApi.ConverterHandler, EnumCtrsCB, IntPtr.Zero);
-            if (hr < 0)
-            {
-                log.Fatal("Ошибка ZG_Cvt_EnumControllers (" + hr + ").");
-                return;
-            }
-            if (g_nCtrCount > 0)
-            {
-                log.Info("Найдено " + g_nCtrCount + " контроллеров.");
-            }
-            else
-            {
-                log.Info("Контроллеры не найдены.");
-            }*/
-
-
-
-
-            log.Info("Found");
-
-
-
-
-            Console.WriteLine("End");
-            log.Info("Test");
-            /*while (listener.IsListening)
-            {
-                context = listener.GetContext();
-                ProcessRequest(context);
-            }
-            listener.Close();*/
+            //Program.ZApi.addKey(31351, -1, "213,15275");
+            //Program.ZApi.deleteKey(31351, 455);
+            //Program.ZApi.deleteKey(31351, 433);
+            //Program.ZApi.getKeys(31351, 1, 2);
         }
     }
 }

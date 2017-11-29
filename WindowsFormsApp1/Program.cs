@@ -14,25 +14,47 @@ namespace WindowsFormsApp1
 {
     static class Program
     {
+        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         public static HttpListener listener;
 
         public static ZApi ZApi = new ZApi();
 
         public static void ProcessRequest(HttpListenerContext context)
         {
-            // Get the data from the HTTP stream
-            var body = new StreamReader(context.Request.InputStream).ReadToEnd();
-
-            Console.WriteLine("Request: " + body);
-
-            byte[] b = Encoding.UTF8.GetBytes("Response");
-            context.Response.StatusCode = 200;
-            context.Response.KeepAlive = false;
-            context.Response.ContentLength64 = b.Length;
-
-            var output = context.Response.OutputStream;
-            output.Write(b, 0, b.Length);
-            context.Response.Close();
+            Stream output;
+            byte[] b;
+            String responseBody = "";
+            log.Info("M: " + context.Request.HttpMethod.Equals("GET") + ", " + context.Request.RawUrl.Equals("/ping/"));
+            if (!(context.Request.HttpMethod.Equals("GET") && context.Request.RawUrl.Equals("/ping/") || context.Request.HttpMethod.Equals("POST"))) {
+                output = context.Response.OutputStream;
+                b = Encoding.UTF8.GetBytes(responseBody);
+                context.Response.StatusCode = 405;
+                context.Response.KeepAlive = false;
+                context.Response.ContentLength64 = b.Length;
+                output.Write(b, 0, b.Length);
+                context.Response.Close();
+                return;
+            }
+            String body = new StreamReader(context.Request.InputStream).ReadToEnd();
+            output = context.Response.OutputStream;
+            try
+            {
+                switch (context.Request.RawUrl)
+                {
+                    case "/ping/":
+                        responseBody = "Pong";
+                        break;
+                }
+            }
+            finally {
+                b = Encoding.UTF8.GetBytes(responseBody);
+                context.Response.StatusCode = 200;
+                context.Response.KeepAlive = false;
+                context.Response.ContentLength64 = b.Length;
+                output.Write(b, 0, b.Length);
+                context.Response.Close();
+            }
         }
 
         /// <summary>
