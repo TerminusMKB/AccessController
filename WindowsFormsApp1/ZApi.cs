@@ -135,7 +135,6 @@ namespace Z
                     }
                     //log.Info("Key: " + i + ", " + aKeys[i].fErased + ", " + aKeys[i].nType + ", " + CardArrayToString(aKeys[i].rNum) + " ("+ aKeys[i].rNum[0] + "-"+ aKeys[i].rNum[1] + "-"+ aKeys[i].rNum[2] + "-"+ aKeys[i].rNum[3] + "-"+ aKeys[i].rNum[4] + "-"+ aKeys[i].rNum[5] + ")");
                     //byte[] res = new byte[16];
-                    //res = CardStringToArray("101,63569");
                 }
                 return keyMap;
             }
