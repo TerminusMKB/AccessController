@@ -50,8 +50,8 @@ namespace Z
             hr = ZGIntf.ZG_Cvt_Open(ref ConverterHandler, ref OpenParams, ConverterInfo);
             if (hr < 0)
             {
-                log.Fatal("Ошибка подключения к конвертеру: " + hr);
-                throw new ZCommonException("Ошибка подключения к конвертеру").setErrorCode(hr);
+                log.Fatal("Ошибка ZG_Cvt_Open: " + hr);
+                throw new ZCommonException("Ошибка ZG_Cvt_Open").setErrorCode(hr);
             }
         }
         public void close() {
