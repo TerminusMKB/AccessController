@@ -63,13 +63,13 @@ namespace WindowsFormsApp1
             DateTime start = DateTime.Now;
             //var sw = Stopwatch.StartNew();
             log.Info("listener thread watcher started");
-            if (Program.listener == null || Program.listener.IsListening)
-            {
-                log.Fatal("Listener не смог стартовать");
-            }
             HttpListenerContext context = null;
+           /* if (Program.listener == null || !Program.listener.IsListening) {
+                return;
+            }*/
             do
             {
+                log.Info("LISTENING: " + Program.listener.IsListening);
                 context = Program.listener.GetContext();
                 Program.ProcessRequest(context);
             } while (true);
@@ -77,21 +77,49 @@ namespace WindowsFormsApp1
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            Program.form1 = (Form1)sender;
             Program.listener = new HttpListener();
             Program.listener.Prefixes.Add("http://*:27099/");
-            Program.listener.Start();
+            try
+            {
+                Program.listener.Start();
+            }
+            catch (HttpListenerException ex)
+            {
+                Program.form1.labelListening.Text = ex.Message;
+                Program.form1.labelListening.ForeColor = System.Drawing.Color.Red;
+                log.Fatal("Listener не смог стартовать: " + ex.Message);
+                return;
+            }
+            if (Program.listener == null || !Program.listener.IsListening)
+            {
+                Program.form1.labelListening.Text = "Не удалось открыть порт";
+                Program.form1.labelListening.ForeColor = System.Drawing.Color.Red;
+                log.Fatal("Listener не смог стартовать");
+                return;
+            }
+
             var listenerThread = new Thread(listenerThreadWatcher);
             listenerThread.IsBackground = true;
             listenerThread.Start();
-            Console.WriteLine("Start");
-            HttpListenerContext context = null;
-
-
-            Program.ZApi.init();
             //Program.ZApi.addKey(31351, -1, "213,15275");
             //Program.ZApi.deleteKey(31351, 455);
             //Program.ZApi.deleteKey(31351, 433);
             //Program.ZApi.getKeys(31351, 1, 2);
+        }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            Program.form1.labelRequestsCount.Text = Program.requestsCount.ToString();
+            Program.form1.labelControllerErrors.Text = Program.controllerErrors.ToString();
+            if (Program.lastRequestDateTime.Year > 1) {
+                Program.form1.labelLastRequestDateTime.Text = Program.lastRequestDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+            }
         }
     }
 }
