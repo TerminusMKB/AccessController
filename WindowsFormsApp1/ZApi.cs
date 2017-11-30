@@ -123,7 +123,6 @@ namespace Z
             {
                 //Открываем контроллер
                 int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
-                bool m_fProximity = true;// ((ControllerInfo.nFlags & ZGIntf.ZG_CTR_F_PROXIMITY) != 0);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
@@ -167,7 +166,6 @@ namespace Z
             {
                 //Открываем контроллер
                 int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
-                bool m_fProximity = true;// ((ControllerInfo.nFlags & ZGIntf.ZG_CTR_F_PROXIMITY) != 0);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
@@ -216,7 +214,6 @@ namespace Z
             {
                 //Открываем контроллер
                 int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
-                bool m_fProximity = true;// ((ControllerInfo.nFlags & ZGIntf.ZG_CTR_F_PROXIMITY) != 0);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
