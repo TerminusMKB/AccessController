@@ -237,7 +237,7 @@ namespace Z
             }
         }
 
-        public GetUnreadEventsResult getUnreadEvents(ushort serialNumber, int lastReadIndex, int lastReadDay, int lastReadHour, int lastReadMinute, int lastReadSecond, int maxEvents)
+        public GetUnreadEventsResult getUnreadEvents(ushort serialNumber, int lastReadIndex, int lastReadMonth, int lastReadDay, int lastReadHour, int lastReadMinute, int lastReadSecond, int maxEvents)
         {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
@@ -268,6 +268,7 @@ namespace Z
                         {
                             result.items = fetchEventsResult.items;
                             result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                            result.lastReadMonth = fetchEventsResult.lastReadMonth;
                             result.lastReadDay = fetchEventsResult.lastReadDay;
                             result.lastReadHour = fetchEventsResult.lastReadHour;
                             result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -291,6 +292,7 @@ namespace Z
                     //Если на прежнем месте события нет, или оно по свойствам отличается от последнего прочитанного, значит был сбой в работе контроллера
                     //и нужно перечитать все события с него
                     if ((fetchEventsResult.items.Count == 0) ||
+                        !(fetchEventsResult.items[0].month == lastReadMonth) ||
                         !(fetchEventsResult.items[0].day == lastReadDay) ||
                         !(fetchEventsResult.items[0].hour == lastReadHour) ||
                         !(fetchEventsResult.items[0].minute == lastReadMinute) ||
@@ -304,6 +306,7 @@ namespace Z
                         {
                             result.items.AddRange(fetchEventsResult.items);
                             result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                            result.lastReadMonth = fetchEventsResult.lastReadMonth;
                             result.lastReadDay = fetchEventsResult.lastReadDay;
                             result.lastReadHour = fetchEventsResult.lastReadHour;
                             result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -317,6 +320,7 @@ namespace Z
                             {
                                 result.items.AddRange(fetchEventsResult.items);
                                 result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                result.lastReadMonth = fetchEventsResult.lastReadMonth;
                                 result.lastReadDay = fetchEventsResult.lastReadDay;
                                 result.lastReadHour = fetchEventsResult.lastReadHour;
                                 result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -339,6 +343,7 @@ namespace Z
                             {
                                 result.items = fetchEventsResult.items;
                                 result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                result.lastReadMonth = fetchEventsResult.lastReadMonth;
                                 result.lastReadDay = fetchEventsResult.lastReadDay;
                                 result.lastReadHour = fetchEventsResult.lastReadHour;
                                 result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -347,6 +352,7 @@ namespace Z
                             else
                             {
                                 result.lastReadIndex = lastReadIndex;
+                                result.lastReadMonth = lastReadMonth;
                                 result.lastReadDay = lastReadDay;
                                 result.lastReadHour = lastReadHour;
                                 result.lastReadMinute = lastReadMinute;
@@ -364,6 +370,7 @@ namespace Z
                                 {
                                     result.items.AddRange(fetchEventsResult.items);
                                     result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                    result.lastReadMonth = fetchEventsResult.lastReadMonth;
                                     result.lastReadDay = fetchEventsResult.lastReadDay;
                                     result.lastReadHour = fetchEventsResult.lastReadHour;
                                     result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -378,6 +385,7 @@ namespace Z
                                 {
                                     result.items.AddRange(fetchEventsResult.items);
                                     result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                    result.lastReadMonth = fetchEventsResult.lastReadMonth;
                                     result.lastReadDay = fetchEventsResult.lastReadDay;
                                     result.lastReadHour = fetchEventsResult.lastReadHour;
                                     result.lastReadMinute = fetchEventsResult.lastReadMinute;
@@ -387,6 +395,7 @@ namespace Z
                             if (result.items.Count == 0)
                             {
                                 result.lastReadIndex = lastReadIndex;
+                                result.lastReadMonth = lastReadMonth;
                                 result.lastReadDay = lastReadDay;
                                 result.lastReadHour = lastReadHour;
                                 result.lastReadMinute = lastReadMinute;
@@ -443,6 +452,7 @@ namespace Z
                         newEvent.keyIndex = nKeyIdx;
                         result.items.Add(newEvent);
                         result.lastReadIndex = eventIndex + j;
+                        result.lastReadMonth = rTime.nMonth;
                         result.lastReadDay = rTime.nDay;
                         result.lastReadHour = rTime.nHour;
                         result.lastReadMinute = rTime.nMinute;
@@ -482,6 +492,7 @@ namespace Z
     {
         public List<ControllerEvent> items;
         public int lastReadIndex;
+        public int lastReadMonth;
         public int lastReadDay;
         public int lastReadHour;
         public int lastReadMinute;
@@ -491,6 +502,7 @@ namespace Z
     public class GetUnreadEventsResult {
         public List<ControllerEvent> items;
         public int lastReadIndex;
+        public int lastReadMonth;
         public int lastReadDay;
         public int lastReadHour;
         public int lastReadMinute;

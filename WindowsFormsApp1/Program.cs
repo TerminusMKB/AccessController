@@ -74,9 +74,10 @@ namespace WindowsFormsApp1
                         Program.lastRequestDateTime = DateTime.Now;
                         GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
                         GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
-                        GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
+                        GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
                         getUnreadEventsResponse.items = getUnreadEventsResult.items;
                         getUnreadEventsResponse.lastReadIndex = getUnreadEventsResult.lastReadIndex;
+                        getUnreadEventsResponse.lastReadMonth = getUnreadEventsResult.lastReadMonth;
                         getUnreadEventsResponse.lastReadDay = getUnreadEventsResult.lastReadDay;
                         getUnreadEventsResponse.lastReadHour = getUnreadEventsResult.lastReadHour;
                         getUnreadEventsResponse.lastReadMinute = getUnreadEventsResult.lastReadMinute;
@@ -190,6 +191,7 @@ namespace WindowsFormsApp1
     {
         public ushort serialNumber;
         public int lastReadIndex;
+        public int lastReadMonth;
         public int lastReadDay;
         public int lastReadHour;
         public int lastReadMinute;
@@ -201,6 +203,7 @@ namespace WindowsFormsApp1
     {
         public List<ControllerEvent> items;
         public int lastReadIndex;
+        public int lastReadMonth;
         public int lastReadDay;
         public int lastReadHour;
         public int lastReadMinute;
