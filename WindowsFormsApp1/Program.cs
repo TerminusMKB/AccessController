@@ -66,7 +66,7 @@ namespace WindowsFormsApp1
                         Program.lastRequestDateTime = DateTime.Now;
                         GetEventsRequest getEventsRequest = JsonConvert.DeserializeObject<GetEventsRequest>(body);
                         GetEventsResponse getEventsResponse = new GetEventsResponse();
-                        getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber);
+                        getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber, getEventsRequest.eventIndex, getEventsRequest.eventCount);
                         responseBody = JsonConvert.SerializeObject(getEventsResponse);
                         break;
                     case "/controller/getKeys/":
@@ -163,6 +163,8 @@ namespace WindowsFormsApp1
 
     public class GetEventsRequest {
         public ushort serialNumber;
+        public int eventIndex;
+        public int eventCount;
     }
 
     public class GetControllersResponse {

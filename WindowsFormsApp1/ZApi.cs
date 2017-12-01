@@ -237,11 +237,11 @@ namespace Z
             }
         }
 
-        public List<ControllerEvent> getEvents(ushort serialNumber) {
+        public List<ControllerEvent> getEvents(ushort serialNumber, int eventIndex, int eventCount) {
             ZG_CTR_INFO rCtrInfo = new ZG_CTR_INFO();
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
-            ZG_CTR_EVENT[] aEvents = new ZG_CTR_EVENT[2048];
+            ZG_CTR_EVENT[] aEvents = new ZG_CTR_EVENT[eventCount];
             ZG_EV_TIME rTime = new ZG_EV_TIME();
             ZG_EC_SUB_EV nSubEvent = new ZG_EC_SUB_EV();
             ZG_CTR_DIRECT nDirect = new ZG_CTR_DIRECT();
@@ -254,7 +254,7 @@ namespace Z
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
                     throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
                 }
-                hr = ZGIntf.ZG_Ctr_ReadEvents(ControllerHandler, 0, aEvents, 2048, null, IntPtr.Zero);
+                hr = ZGIntf.ZG_Ctr_ReadEvents(ControllerHandler, eventIndex, aEvents, eventCount, null, IntPtr.Zero);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_ReadEvents (" + hr + ")");
@@ -262,7 +262,7 @@ namespace Z
                 }
                 ZG_CTR_EVENT rEv;
                 List<ControllerEvent> controllerEventList = new List<ControllerEvent>();
-                for (int j = 0; j < 2048; j++)
+                for (int j = 0; j < eventCount; j++)
                 {
                     rEv = aEvents[j];
                     switch (rEv.nType) {
