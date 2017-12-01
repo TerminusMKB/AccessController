@@ -178,7 +178,7 @@ namespace Z
                 aKeys[0].nAccess = 255; //Доступ без рассписания
                 aKeys[0].nFlags = ZGIntf.ZG_KF_SHORTNUM;
                 int _keyIndex = -1;
-                if (keyIndex.Equals(-1))
+                if (keyIndex == -1)
                 {
                     hr = ZGIntf.ZG_Ctr_GetKeyTopIndex(ControllerHandler, ref _keyIndex, 0);
                     if (hr < 0)
@@ -237,14 +237,12 @@ namespace Z
             }
         }
 
-        public List<ControllerEvent> getEvents(ushort serialNumber, int eventIndex, int eventCount) {
-            ZG_CTR_INFO rCtrInfo = new ZG_CTR_INFO();
+        public GetUnreadEventsResult getUnreadEvents(ushort serialNumber, int lastReadIndex, int lastReadDay, int lastReadHour, int lastReadMinute, int lastReadSecond, int maxEvents)
+        {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
-            ZG_CTR_EVENT[] aEvents = new ZG_CTR_EVENT[eventCount];
-            ZG_EV_TIME rTime = new ZG_EV_TIME();
-            ZG_EC_SUB_EV nSubEvent = new ZG_EC_SUB_EV();
-            ZG_CTR_DIRECT nDirect = new ZG_CTR_DIRECT();
+            GetUnreadEventsResult result = new GetUnreadEventsResult();
+            result.items = new List<ControllerEvent>();
             try
             {
                 //Открываем контроллер
@@ -254,36 +252,151 @@ namespace Z
                     log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
                     throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
                 }
-                hr = ZGIntf.ZG_Ctr_ReadEvents(ControllerHandler, eventIndex, aEvents, eventCount, null, IntPtr.Zero);
-                if (hr < 0)
+                //Читаем указатель на следующее записываемое событие
+                int writeIndex = 0;
+                int _readIndex = 0;
+                hr = ZGIntf.ZG_Ctr_ReadEventIdxs(ControllerHandler, ref writeIndex, ref _readIndex);
+                //log.Info("WriteIndex: " + writeIndex);
+                if (lastReadIndex == -1)
                 {
-                    log.Fatal("Ошибка ZG_Ctr_ReadEvents (" + hr + ")");
-                    throw new ZCommonException("Ошибка ZG_Ctr_ReadEvents").setErrorCode(hr);
-                }
-                ZG_CTR_EVENT rEv;
-                List<ControllerEvent> controllerEventList = new List<ControllerEvent>();
-                for (int j = 0; j < eventCount; j++)
-                {
-                    rEv = aEvents[j];
-                    switch (rEv.nType) {
-                        case ZG_CTR_EV_TYPE.ZG_EV_KEY_NOT_FOUND:
-                        case ZG_CTR_EV_TYPE.ZG_EV_KEY_OPEN:
-                        case ZG_CTR_EV_TYPE.ZG_EV_KEY_ACCESS:
-                            int nKeyIdx = 0;
-                            int nKeyBank = 0;
-                            ZGIntf.ZG_Ctr_DecodePassEvent(ControllerHandler, rEv.aData, ref rTime, ref nDirect, ref nKeyIdx, ref nKeyBank);
-                            ControllerEvent newEvent = new ControllerEvent();
-                            newEvent.month = rTime.nMonth;
-                            newEvent.day = rTime.nDay;
-                            newEvent.hour = rTime.nHour;
-                            newEvent.minute = rTime.nMinute;
-                            newEvent.second = rTime.nSecond;
-                            newEvent.keyIndex = nKeyIdx;
-                            controllerEventList.Add(newEvent);
-                            break;
+                    //Никогда не читали событий из контроллера
+                    //log.Info("Не читали события из контроллера");
+                    if (writeIndex > 0)
+                    {
+                        FetchEventsResult fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
+                        if (fetchEventsResult.items.Count > 0)
+                        {
+                            result.items = fetchEventsResult.items;
+                            result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                            result.lastReadDay = fetchEventsResult.lastReadDay;
+                            result.lastReadHour = fetchEventsResult.lastReadHour;
+                            result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                            result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                        }
+                        else
+                        {
+                            result.lastReadIndex = -1;
+                        }
+                    }
+                    else
+                    {
+                        //Если следующий индекс, в который будет производиться запись, равен нулю, то ничего пока не читаем
+                        result.lastReadIndex = -1;
                     }
                 }
-                return controllerEventList;
+                else
+                {
+                    //Читаем последнее полученное в прошлый раз событие
+                    FetchEventsResult fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex, 1);
+                    //Если на прежнем месте события нет, или оно по свойствам отличается от последнего прочитанного, значит был сбой в работе контроллера
+                    //и нужно перечитать все события с него
+                    if ((fetchEventsResult.items.Count == 0) ||
+                        !(fetchEventsResult.items[0].day == lastReadDay) ||
+                        !(fetchEventsResult.items[0].hour == lastReadHour) ||
+                        !(fetchEventsResult.items[0].minute == lastReadMinute) ||
+                        !(fetchEventsResult.items[0].second == lastReadSecond)
+                        )
+                    {
+                        //log.Info("Последнее событие отличается");
+                        //Читаем хвост от следующего индекса записи до конца списка
+                        fetchEventsResult = fetchEventsBlock(ControllerHandler, writeIndex, maxEvents - writeIndex);
+                        if (fetchEventsResult.items.Count > 0)
+                        {
+                            result.items.AddRange(fetchEventsResult.items);
+                            result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                            result.lastReadDay = fetchEventsResult.lastReadDay;
+                            result.lastReadHour = fetchEventsResult.lastReadHour;
+                            result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                            result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                        }
+                        //Читаем от начала списка до следующего индекса записи
+                        if (writeIndex > 0)
+                        {
+                            fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
+                            if (fetchEventsResult.items.Count > 0)
+                            {
+                                result.items.AddRange(fetchEventsResult.items);
+                                result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                result.lastReadDay = fetchEventsResult.lastReadDay;
+                                result.lastReadHour = fetchEventsResult.lastReadHour;
+                                result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                                result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                            }
+                        }
+                        if (result.items.Count == 0)
+                        {
+                            result.lastReadIndex = -1;
+                        }
+                    }
+                    else
+                    {
+                        //log.Info("Последнее событие в порядке");
+                        if (writeIndex > lastReadIndex)
+                        {
+                            //Читаем небольшой хвост от текущего индекса до следующего индекса записи
+                            fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, writeIndex - lastReadIndex - 1);
+                            if (fetchEventsResult.items.Count > 0)
+                            {
+                                result.items = fetchEventsResult.items;
+                                result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                result.lastReadDay = fetchEventsResult.lastReadDay;
+                                result.lastReadHour = fetchEventsResult.lastReadHour;
+                                result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                                result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                            }
+                            else
+                            {
+                                result.lastReadIndex = lastReadIndex;
+                                result.lastReadDay = lastReadDay;
+                                result.lastReadHour = lastReadHour;
+                                result.lastReadMinute = lastReadMinute;
+                                result.lastReadSecond = lastReadSecond;
+                            }
+                        }
+                        else
+                        {
+                            //Индекс записи до шёл до конца списка и теперь отстаёт от нас
+                            //Читаем вначале хвост от нас до конца списка
+                            if (lastReadIndex < maxEvents - 1)
+                            {
+                                fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, maxEvents - lastReadIndex - 1);
+                                if (fetchEventsResult.items.Count > 0)
+                                {
+                                    result.items.AddRange(fetchEventsResult.items);
+                                    result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                    result.lastReadDay = fetchEventsResult.lastReadDay;
+                                    result.lastReadHour = fetchEventsResult.lastReadHour;
+                                    result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                                    result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                                }
+                            }
+                            //Читаем от начала списка до индекса записи
+                            if (writeIndex > 0)
+                            {
+                                fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
+                                if (fetchEventsResult.items.Count > 0)
+                                {
+                                    result.items.AddRange(fetchEventsResult.items);
+                                    result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                    result.lastReadDay = fetchEventsResult.lastReadDay;
+                                    result.lastReadHour = fetchEventsResult.lastReadHour;
+                                    result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                                    result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                                }
+                            }
+                            if (result.items.Count == 0)
+                            {
+                                result.lastReadIndex = lastReadIndex;
+                                result.lastReadDay = lastReadDay;
+                                result.lastReadHour = lastReadHour;
+                                result.lastReadMinute = lastReadMinute;
+                                result.lastReadSecond = lastReadSecond;
+                            }
+                        }
+                    }
+                }
+                //log.Info("Событий вернулось: " + result.items.Count);
+                return result;
             }
             finally
             {
@@ -294,6 +407,94 @@ namespace Z
                 }
             }
         }
+
+        private FetchEventsResult fetchEventsBlock(IntPtr ControllerHandler, int eventIndex, int eventCount)
+        {
+            //log.Info("Requested from " + eventIndex + ", count of " + eventCount);
+            ZG_EV_TIME rTime = new ZG_EV_TIME();
+            ZG_CTR_DIRECT nDirect = new ZG_CTR_DIRECT();
+            ZG_CTR_EVENT[] aEvents = new ZG_CTR_EVENT[eventCount];
+            int hr = ZGIntf.ZG_Ctr_ReadEvents(ControllerHandler, eventIndex, aEvents, eventCount, null, IntPtr.Zero);
+            if (hr < 0)
+            {
+                log.Fatal("Ошибка ZG_Ctr_ReadEvents (" + hr + ")");
+                throw new ZCommonException("Ошибка ZG_Ctr_ReadEvents").setErrorCode(hr);
+            }
+            ZG_CTR_EVENT rEv;
+            FetchEventsResult result = new FetchEventsResult();
+            result.items = new List<ControllerEvent>();
+            for (int j = 0; j < eventCount; j++)
+            {
+                rEv = aEvents[j];
+                switch (rEv.nType)
+                {
+                    case ZG_CTR_EV_TYPE.ZG_EV_KEY_NOT_FOUND:
+                    case ZG_CTR_EV_TYPE.ZG_EV_KEY_OPEN:
+                    case ZG_CTR_EV_TYPE.ZG_EV_KEY_ACCESS:
+                        int nKeyIdx = 0;
+                        int nKeyBank = 0;
+                        ZGIntf.ZG_Ctr_DecodePassEvent(ControllerHandler, rEv.aData, ref rTime, ref nDirect, ref nKeyIdx, ref nKeyBank);
+                        ControllerEvent newEvent = new ControllerEvent();
+                        newEvent.month = rTime.nMonth;
+                        newEvent.day = rTime.nDay;
+                        newEvent.hour = rTime.nHour;
+                        newEvent.minute = rTime.nMinute;
+                        newEvent.second = rTime.nSecond;
+                        newEvent.keyIndex = nKeyIdx;
+                        result.items.Add(newEvent);
+                        result.lastReadIndex = eventIndex + j;
+                        result.lastReadDay = rTime.nDay;
+                        result.lastReadHour = rTime.nHour;
+                        result.lastReadMinute = rTime.nMinute;
+                        result.lastReadSecond = rTime.nSecond;
+                        break;
+                }
+            }
+            return result;
+        }
+
+        public List<ControllerEvent> getEvents(ushort serialNumber, int eventIndex, int eventCount) {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                return fetchEventsBlock(ControllerHandler, eventIndex, eventCount).items;
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
+        }
+    }
+
+    public class FetchEventsResult
+    {
+        public List<ControllerEvent> items;
+        public int lastReadIndex;
+        public int lastReadDay;
+        public int lastReadHour;
+        public int lastReadMinute;
+        public int lastReadSecond;
+    }
+
+    public class GetUnreadEventsResult {
+        public List<ControllerEvent> items;
+        public int lastReadIndex;
+        public int lastReadDay;
+        public int lastReadHour;
+        public int lastReadMinute;
+        public int lastReadSecond;
     }
 
     public class ControllerKey {

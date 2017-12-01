@@ -69,6 +69,20 @@ namespace WindowsFormsApp1
                         getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber, getEventsRequest.eventIndex, getEventsRequest.eventCount);
                         responseBody = JsonConvert.SerializeObject(getEventsResponse);
                         break;
+                    case "/controller/getUnreadEvents/":
+                        Program.requestsCount++;
+                        Program.lastRequestDateTime = DateTime.Now;
+                        GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
+                        GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
+                        GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
+                        getUnreadEventsResponse.items = getUnreadEventsResult.items;
+                        getUnreadEventsResponse.lastReadIndex = getUnreadEventsResult.lastReadIndex;
+                        getUnreadEventsResponse.lastReadDay = getUnreadEventsResult.lastReadDay;
+                        getUnreadEventsResponse.lastReadHour = getUnreadEventsResult.lastReadHour;
+                        getUnreadEventsResponse.lastReadMinute = getUnreadEventsResult.lastReadMinute;
+                        getUnreadEventsResponse.lastReadSecond = getUnreadEventsResult.lastReadSecond;
+                        responseBody = JsonConvert.SerializeObject(getUnreadEventsResponse);
+                        break;
                     case "/controller/getKeys/":
                         Program.requestsCount++;
                         Program.lastRequestDateTime = DateTime.Now;
@@ -167,11 +181,34 @@ namespace WindowsFormsApp1
         public int eventCount;
     }
 
+    public class GetEventsResponse
+    {
+        public List<ControllerEvent> items;
+    }
+
+    public class GetUnreadEventsRequest
+    {
+        public ushort serialNumber;
+        public int lastReadIndex;
+        public int lastReadDay;
+        public int lastReadHour;
+        public int lastReadMinute;
+        public int lastReadSecond;
+        public int maxEvents;
+    }
+
+    public class GetUnreadEventsResponse
+    {
+        public List<ControllerEvent> items;
+        public int lastReadIndex;
+        public int lastReadDay;
+        public int lastReadHour;
+        public int lastReadMinute;
+        public int lastReadSecond;
+    }
+
     public class GetControllersResponse {
         public List<ControllerInfoShort> items;
     }
 
-    public class GetEventsResponse {
-        public List<ControllerEvent> items;
-    }
 }
