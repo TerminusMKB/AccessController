@@ -64,12 +64,8 @@ namespace WindowsFormsApp1
             //var sw = Stopwatch.StartNew();
             log.Info("listener thread watcher started");
             HttpListenerContext context = null;
-           /* if (Program.listener == null || !Program.listener.IsListening) {
-                return;
-            }*/
             do
             {
-                log.Info("LISTENING: " + Program.listener.IsListening);
                 context = Program.listener.GetContext();
                 Program.ProcessRequest(context);
             } while (true);

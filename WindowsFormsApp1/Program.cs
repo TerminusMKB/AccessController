@@ -11,6 +11,7 @@ using System.IO;
 using Z;
 using Errors;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace WindowsFormsApp1
 {
@@ -126,11 +127,15 @@ namespace WindowsFormsApp1
             finally
             {
                 b = Encoding.UTF8.GetBytes(responseBody);
-                context.Response.StatusCode = 200;
-                context.Response.KeepAlive = false;
-                context.Response.ContentLength64 = b.Length;
-                output.Write(b, 0, b.Length);
-                context.Response.Close();
+                try
+                {
+                    context.Response.StatusCode = 200;
+                    context.Response.KeepAlive = false;
+                    context.Response.ContentLength64 = b.Length;
+                    output.Write(b, 0, b.Length);
+                    context.Response.Close();
+                }
+                catch (HttpListenerException e) {}
                 Program.ZApi.close();
             }
         }
