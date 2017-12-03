@@ -138,7 +138,7 @@ namespace Z
                     if (aKeys[i].nType.Equals(ZG_CTR_KEY_TYPE.ZG_KEY_NORMAL))
                     {
                         newKey = new ControllerKey();
-                        newKey.name = CardArrayToString(aKeys[i].rNum);
+                        newKey.code = CardArrayToString(aKeys[i].rNum);
                         newKey.isErased = aKeys[i].fErased;
                         keyList.Add(newKey);
                         //log.Info("KEY: " + newKey.name + ", " + aKeys[i].nAccess + ", " + aKeys[i].nFlags);
@@ -159,7 +159,7 @@ namespace Z
             }
         }
 
-        public void addKey(ushort serialNumber, int keyIndex, String name) {
+        public void addKey(ushort serialNumber, int keyIndex, String code) {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
             try
@@ -174,7 +174,7 @@ namespace Z
                 //Пишем ключ
                 ZG_CTR_KEY[] aKeys = new ZG_CTR_KEY[1];
                 aKeys[0].nType = ZG_CTR_KEY_TYPE.ZG_KEY_NORMAL;
-                aKeys[0].rNum = CardStringToArray(name);
+                aKeys[0].rNum = CardStringToArray(code);
                 aKeys[0].nAccess = 255; //Доступ без рассписания
                 aKeys[0].nFlags = ZGIntf.ZG_KF_SHORTNUM;
                 int _keyIndex = -1;
@@ -510,7 +510,7 @@ namespace Z
     }
 
     public class ControllerKey {
-        public String name;
+        public String code;
         public bool isErased;
     }
 

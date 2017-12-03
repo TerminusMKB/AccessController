@@ -100,11 +100,11 @@ namespace WindowsFormsApp1
                             Program.requestsCount++;
                             Program.lastRequestDateTime = DateTime.Now;
                             AddKeyRequest addKeyRequest = JsonConvert.DeserializeObject<AddKeyRequest>(body);
-                            if (addKeyRequest.name == null || addKeyRequest.name.Trim().Equals("") || !addKeyRequest.name.Contains(","))
+                            if (addKeyRequest.code == null || addKeyRequest.code.Trim().Equals("") || !addKeyRequest.code.Contains(","))
                             {
-                                throw new DataErrorException("Поле name должно содержать имя ключа в формате ###,#####");
+                                throw new DataErrorException("Поле code должно содержать код ключа в формате ###,#####");
                             }
-                            Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.name);
+                            Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.code);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
                         case "/controller/clearKey/":
@@ -187,7 +187,7 @@ namespace WindowsFormsApp1
     {
         public ushort serialNumber;
         public int keyIndex;
-        public String name;
+        public String code;
     }
 
     public class GetEventsRequest {
