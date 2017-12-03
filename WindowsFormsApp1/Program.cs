@@ -31,112 +31,121 @@ namespace WindowsFormsApp1
 
         public static void ProcessRequest(HttpListenerContext context)
         {
-            Stream output;
-            byte[] b;
-            String responseBody = "";
-            StatusResponse statusResponse = new StatusResponse();
-            if (!(context.Request.HttpMethod.Equals("GET") && context.Request.RawUrl.Equals("/ping/") || context.Request.HttpMethod.Equals("POST"))) {
-                output = context.Response.OutputStream;
-                b = Encoding.UTF8.GetBytes(responseBody);
-                context.Response.StatusCode = 405;
-                context.Response.KeepAlive = false;
-                context.Response.ContentLength64 = b.Length;
-                output.Write(b, 0, b.Length);
-                context.Response.Close();
-                return;
-            }
-            String body = new StreamReader(context.Request.InputStream).ReadToEnd();
-            output = context.Response.OutputStream;
             try
             {
-                Program.ZApi.init();
-                switch (context.Request.RawUrl)
+                Stream output;
+                byte[] b;
+                String responseBody = "";
+                StatusResponse statusResponse = new StatusResponse();
+                if (!(context.Request.HttpMethod.Equals("GET") && context.Request.RawUrl.Equals("/ping/") || context.Request.HttpMethod.Equals("POST")))
                 {
-                    case "/ping/":
-                        responseBody = "Pong";
-                        break;
-                    case "/converter/getControllers/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        GetControllersResponse getControllersResponse = new GetControllersResponse();
-                        getControllersResponse.items = Program.ZApi.GetControllers();
-                        responseBody = JsonConvert.SerializeObject(getControllersResponse);
-                        break;
-                    case "/controller/getEvents/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        GetEventsRequest getEventsRequest = JsonConvert.DeserializeObject<GetEventsRequest>(body);
-                        GetEventsResponse getEventsResponse = new GetEventsResponse();
-                        getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber, getEventsRequest.eventIndex, getEventsRequest.eventCount);
-                        responseBody = JsonConvert.SerializeObject(getEventsResponse);
-                        break;
-                    case "/controller/getUnreadEvents/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
-                        GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
-                        GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
-                        getUnreadEventsResponse.items = getUnreadEventsResult.items;
-                        getUnreadEventsResponse.lastReadIndex = getUnreadEventsResult.lastReadIndex;
-                        getUnreadEventsResponse.lastReadMonth = getUnreadEventsResult.lastReadMonth;
-                        getUnreadEventsResponse.lastReadDay = getUnreadEventsResult.lastReadDay;
-                        getUnreadEventsResponse.lastReadHour = getUnreadEventsResult.lastReadHour;
-                        getUnreadEventsResponse.lastReadMinute = getUnreadEventsResult.lastReadMinute;
-                        getUnreadEventsResponse.lastReadSecond = getUnreadEventsResult.lastReadSecond;
-                        responseBody = JsonConvert.SerializeObject(getUnreadEventsResponse);
-                        break;
-                    case "/controller/getKeys/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        GetKeysRequest getKeysRequest = JsonConvert.DeserializeObject<GetKeysRequest>(body);
-                        GetKeysResponse getKeysResponse = new GetKeysResponse();
-                        getKeysResponse.items = Program.ZApi.getKeys(getKeysRequest.serialNumber, getKeysRequest.keyIndex, getKeysRequest.keyCount);
-                        responseBody = JsonConvert.SerializeObject(getKeysResponse);
-                        break;
-                    case "/controller/addKey/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        AddKeyRequest addKeyRequest = JsonConvert.DeserializeObject<AddKeyRequest>(body);
-                        if (addKeyRequest.name == null || addKeyRequest.name.Trim().Equals("") || !addKeyRequest.name.Contains(",")) {
-                            throw new DataErrorException("Поле name должно содержать имя ключа в формате ###,#####");
-                        }
-                        Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.name);
-                        responseBody = JsonConvert.SerializeObject(statusResponse);
-                        break;
-                    case "/controller/clearKey/":
-                        Program.requestsCount++;
-                        Program.lastRequestDateTime = DateTime.Now;
-                        ClearKeyRequest clearKeyRequest = JsonConvert.DeserializeObject<ClearKeyRequest>(body);
-                        Program.ZApi.clearKey(clearKeyRequest.serialNumber, clearKeyRequest.keyIndex);
-                        responseBody = JsonConvert.SerializeObject(statusResponse);
-                        break;
-                }
-            }
-            catch (ZCommonException e) {
-                Program.controllerErrors++;
-                responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("CONTROLLER_ERROR").setErrorString(e.Message + " (" + e.getErrorCode() + ")"));
-            }
-            catch (DataErrorException e)
-            {
-                responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("DATA_ERROR").setErrorString(e.Message));
-            }
-            catch (RequestErrorException e)
-            {
-                responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("REQUEST_ERROR").setErrorString(e.Message));
-            }
-            finally
-            {
-                b = Encoding.UTF8.GetBytes(responseBody);
-                try
-                {
-                    context.Response.StatusCode = 200;
+                    output = context.Response.OutputStream;
+                    b = Encoding.UTF8.GetBytes(responseBody);
+                    context.Response.StatusCode = 405;
                     context.Response.KeepAlive = false;
                     context.Response.ContentLength64 = b.Length;
                     output.Write(b, 0, b.Length);
                     context.Response.Close();
+                    return;
                 }
-                catch (HttpListenerException e) {}
-                Program.ZApi.close();
+                String body = new StreamReader(context.Request.InputStream).ReadToEnd();
+                output = context.Response.OutputStream;
+                try
+                {
+                    Program.ZApi.init();
+                    switch (context.Request.RawUrl)
+                    {
+                        case "/ping/":
+                            responseBody = "Pong";
+                            break;
+                        case "/converter/getControllers/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            GetControllersResponse getControllersResponse = new GetControllersResponse();
+                            getControllersResponse.items = Program.ZApi.GetControllers();
+                            responseBody = JsonConvert.SerializeObject(getControllersResponse);
+                            break;
+                        case "/controller/getEvents/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            GetEventsRequest getEventsRequest = JsonConvert.DeserializeObject<GetEventsRequest>(body);
+                            GetEventsResponse getEventsResponse = new GetEventsResponse();
+                            getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber, getEventsRequest.eventIndex, getEventsRequest.eventCount);
+                            responseBody = JsonConvert.SerializeObject(getEventsResponse);
+                            break;
+                        case "/controller/getUnreadEvents/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
+                            GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
+                            GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
+                            getUnreadEventsResponse.items = getUnreadEventsResult.items;
+                            getUnreadEventsResponse.lastReadIndex = getUnreadEventsResult.lastReadIndex;
+                            getUnreadEventsResponse.lastReadMonth = getUnreadEventsResult.lastReadMonth;
+                            getUnreadEventsResponse.lastReadDay = getUnreadEventsResult.lastReadDay;
+                            getUnreadEventsResponse.lastReadHour = getUnreadEventsResult.lastReadHour;
+                            getUnreadEventsResponse.lastReadMinute = getUnreadEventsResult.lastReadMinute;
+                            getUnreadEventsResponse.lastReadSecond = getUnreadEventsResult.lastReadSecond;
+                            responseBody = JsonConvert.SerializeObject(getUnreadEventsResponse);
+                            break;
+                        case "/controller/getKeys/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            GetKeysRequest getKeysRequest = JsonConvert.DeserializeObject<GetKeysRequest>(body);
+                            GetKeysResponse getKeysResponse = new GetKeysResponse();
+                            getKeysResponse.items = Program.ZApi.getKeys(getKeysRequest.serialNumber, getKeysRequest.keyIndex, getKeysRequest.keyCount);
+                            responseBody = JsonConvert.SerializeObject(getKeysResponse);
+                            break;
+                        case "/controller/addKey/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            AddKeyRequest addKeyRequest = JsonConvert.DeserializeObject<AddKeyRequest>(body);
+                            if (addKeyRequest.name == null || addKeyRequest.name.Trim().Equals("") || !addKeyRequest.name.Contains(","))
+                            {
+                                throw new DataErrorException("Поле name должно содержать имя ключа в формате ###,#####");
+                            }
+                            Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.name);
+                            responseBody = JsonConvert.SerializeObject(statusResponse);
+                            break;
+                        case "/controller/clearKey/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            ClearKeyRequest clearKeyRequest = JsonConvert.DeserializeObject<ClearKeyRequest>(body);
+                            Program.ZApi.clearKey(clearKeyRequest.serialNumber, clearKeyRequest.keyIndex);
+                            responseBody = JsonConvert.SerializeObject(statusResponse);
+                            break;
+                    }
+                }
+                catch (ZCommonException e)
+                {
+                    Program.controllerErrors++;
+                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("CONTROLLER_ERROR").setErrorString(e.Message + " (" + e.getErrorCode() + ")"));
+                }
+                catch (DataErrorException e)
+                {
+                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("DATA_ERROR").setErrorString(e.Message));
+                }
+                catch (RequestErrorException e)
+                {
+                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("REQUEST_ERROR").setErrorString(e.Message));
+                }
+                finally
+                {
+                    b = Encoding.UTF8.GetBytes(responseBody);
+                    try
+                    {
+                        context.Response.StatusCode = 200;
+                        context.Response.KeepAlive = false;
+                        context.Response.ContentLength64 = b.Length;
+                        output.Write(b, 0, b.Length);
+                        context.Response.Close();
+                    }
+                    catch (HttpListenerException e) { }
+                    Program.ZApi.close();
+                }
+            }
+            catch (Exception e) {
+                log.Fatal("FATAL", e);
             }
         }
 
