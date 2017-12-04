@@ -129,6 +129,10 @@ namespace WindowsFormsApp1
                 {
                     responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("REQUEST_ERROR").setErrorString(e.Message));
                 }
+                catch (Exception e) {
+                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("INTERNAL_ERROR").setErrorString(e.Message));
+                    throw e;
+                }
                 finally
                 {
                     b = Encoding.UTF8.GetBytes(responseBody);
