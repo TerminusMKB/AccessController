@@ -12,8 +12,6 @@ namespace Z
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private ZP_PORT_TYPE PortType = ZP_PORT_TYPE.ZP_PORT_IP;
-        private String Address = "192.168.101.12:7000";
         public IntPtr ConverterHandler = IntPtr.Zero;
         private List<ControllerInfoShort> tmpControllerInfoShortList;
 
@@ -31,7 +29,7 @@ namespace Z
                                                           "Matrix II Wi-Fi"
                                                       };
 
-        public void init() {
+        public void init(String proxyAddress) {
             if (!ConverterHandler.Equals(IntPtr.Zero)) {
                 return;
             }
@@ -43,8 +41,15 @@ namespace Z
             }
             ZG_CVT_INFO ConverterInfo = new ZG_CVT_INFO();
             ZG_CVT_OPEN_PARAMS OpenParams = new ZG_CVT_OPEN_PARAMS();
-            OpenParams.nPortType = PortType;
-            OpenParams.pszName = @Address;
+            if (proxyAddress.Contains(":"))
+            {
+                OpenParams.nPortType = ZP_PORT_TYPE.ZP_PORT_IP;
+            }
+            else
+            {
+                OpenParams.nPortType = ZP_PORT_TYPE.ZP_PORT_COM;
+            }
+            OpenParams.pszName = @proxyAddress;
             OpenParams.nSpeed = ZG_CVT_SPEED.ZG_SPEED_57600;
 
             hr = ZGIntf.ZG_Cvt_Open(ref ConverterHandler, ref OpenParams, ConverterInfo);
@@ -98,6 +103,10 @@ namespace Z
         }
 
         public List<ControllerInfoShort> GetControllers() {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            ZG_CTR_MODE ControllerMode = ZG_CTR_MODE.ZG_MODE_UNDEF;
+            uint ControllerModeFlags = 0;
             tmpControllerInfoShortList = new List<ControllerInfoShort>();
             int hr = ZGIntf.ZG_Cvt_EnumControllers(ConverterHandler, tmpEnumConverters, IntPtr.Zero);
             if (hr < 0)
@@ -105,7 +114,69 @@ namespace Z
                 log.Fatal("Ошибка ZG_Cvt_EnumControllers (" + hr + ").");
                 throw new ZCommonException("Ошибка ZG_Cvt_EnumControllers").setErrorCode(hr);
             }
+            if (tmpControllerInfoShortList.Count > 0) {
+                for (int i = 0; i < tmpControllerInfoShortList.Count; i++)
+                {
+                    try
+                    {
+                        //Открываем контроллер
+                        hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, tmpControllerInfoShortList[i].serialNumber, ref ControllerInfo);
+                        if (hr < 0)
+                        {
+                            log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                            throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                        }
+                        //Читаем режим
+                        hr = ZGIntf.ZG_Ctr_GetCtrModeInfo(ControllerHandler, ref ControllerMode, ref ControllerModeFlags);
+                        if (hr < 0)
+                        {
+                            log.Fatal("Ошибка ZG_Ctr_GetCtrModeInfo (" + hr + ")");
+                            throw new ZCommonException("Ошибка ZG_Ctr_GetCtrModeInfo").setErrorCode(hr);
+                        }
+                        tmpControllerInfoShortList[i].mode = ControllerMode;
+                    }
+                    finally
+                    {
+                        //Автоматически закрываем контроллер
+                        if (ControllerHandler != IntPtr.Zero)
+                        {
+                            ZGIntf.ZG_CloseHandle(ControllerHandler);
+                        }
+                    }
+                }
+            }
             return tmpControllerInfoShortList;
+        }
+
+        public void setControllerMode(ushort serialNumber, ZG_CTR_MODE mode)
+        {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Читаем режим
+                hr = ZGIntf.ZG_Ctr_SetCtrMode(ControllerHandler, mode);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_SetCtrMode (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_SetCtrMode").setErrorCode(hr);
+                }
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
         }
 
         public List<ControllerKey> getKeys(ushort serialNumber)
@@ -519,6 +590,8 @@ namespace Z
         public int address;
         public UInt16 serialNumber;
         public int maxEvents;
+
+        public ZG_CTR_MODE mode;
     }
 
     public class ControllerEvent {

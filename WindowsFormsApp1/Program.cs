@@ -12,18 +12,22 @@ using Z;
 using Errors;
 using Newtonsoft.Json;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Configuration;
 
 namespace WindowsFormsApp1
 {
     static class Program
     {
-        private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+        public static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public static HttpListener listener;
 
         public static int requestsCount = 0;
         public static DateTime lastRequestDateTime;
         public static int controllerErrors = 0;
+
+        public static String converterAddress = "";
 
         public static Form1 form1;
 
@@ -52,7 +56,7 @@ namespace WindowsFormsApp1
                 output = context.Response.OutputStream;
                 try
                 {
-                    Program.ZApi.init();
+                    Program.ZApi.init(converterAddress);
                     switch (context.Request.RawUrl)
                     {
                         case "/ping/":
@@ -114,12 +118,19 @@ namespace WindowsFormsApp1
                             Program.ZApi.clearKey(clearKeyRequest.serialNumber, clearKeyRequest.keyIndex);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
+                        case "/controller/setMode/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            SetModeRequest setModeRequest = JsonConvert.DeserializeObject<SetModeRequest>(body);
+                            Program.ZApi.setControllerMode(setModeRequest.serialNumber, setModeRequest.mode);
+                            responseBody = JsonConvert.SerializeObject(statusResponse);
+                            break;
                     }
                 }
                 catch (ZCommonException e)
                 {
                     Program.controllerErrors++;
-                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("CONTROLLER_ERROR").setErrorString(e.Message + " (" + e.getErrorCode() + ")"));
+                    responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("CONTROLLER_ERROR").setErrorString(e.Message + " (0x" + e.getErrorCode().ToString("X") + ")"));
                 }
                 catch (DataErrorException e)
                 {
@@ -159,7 +170,13 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
-            //XmlConfigurator.Configure(new System.IO.FileInfo("log4net.xml"));
+            
+            converterAddress = Properties.Settings.Default.converterAddress.Trim();
+            
+            if (converterAddress.Length == 0) {
+                log.Fatal("В настройках не указан адрес конвертера");
+                return;
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());
@@ -168,6 +185,11 @@ namespace WindowsFormsApp1
 
     public class StatusResponse {
         public int status = 1;
+    }
+
+    public class SetModeRequest {
+        public ushort serialNumber;
+        public ZGuard.ZG_CTR_MODE mode;
     }
 
     public class ClearKeyRequest
@@ -231,5 +253,4 @@ namespace WindowsFormsApp1
     public class GetControllersResponse {
         public List<ControllerInfoShort> items;
     }
-
 }
