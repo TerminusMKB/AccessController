@@ -125,6 +125,20 @@ namespace WindowsFormsApp1
                             Program.ZApi.setControllerMode(setModeRequest.serialNumber, setModeRequest.mode);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
+                        case "/controller/setDateTime/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            SetDateTimeRequest setDateTimeRequest = JsonConvert.DeserializeObject<SetDateTimeRequest>(body);
+                            Program.ZApi.setControllerDateTime(setDateTimeRequest.serialNumber, setDateTimeRequest.year, setDateTimeRequest.month, setDateTimeRequest.day, setDateTimeRequest.hour, setDateTimeRequest.minute, setDateTimeRequest.second);
+                            responseBody = JsonConvert.SerializeObject(statusResponse);
+                            break;
+                        case "/controller/getDateTime/":
+                            Program.requestsCount++;
+                            Program.lastRequestDateTime = DateTime.Now;
+                            GetDateTimeRequest getDateTimeRequest = JsonConvert.DeserializeObject<GetDateTimeRequest>(body);
+                            ControllerDateTime controllerDateTime = Program.ZApi.getControllerDateTime(getDateTimeRequest.serialNumber);
+                            responseBody = JsonConvert.SerializeObject(controllerDateTime);
+                            break;
                     }
                 }
                 catch (ZCommonException e)
@@ -190,6 +204,22 @@ namespace WindowsFormsApp1
     public class SetModeRequest {
         public ushort serialNumber;
         public ZGuard.ZG_CTR_MODE mode;
+    }
+
+    public class SetDateTimeRequest
+    {
+        public ushort serialNumber;
+        public ushort year;
+        public ushort month;
+        public ushort day;
+        public ushort hour;
+        public ushort minute;
+        public ushort second;
+    }
+
+    public class GetDateTimeRequest
+    {
+        public ushort serialNumber;
     }
 
     public class ClearKeyRequest
