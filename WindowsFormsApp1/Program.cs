@@ -72,7 +72,7 @@ namespace WindowsFormsApp1
                 {
                     lock (Program.initLocker)
                     {
-                        Program.ZApi.init();
+                        Program.ZApi.init(converterAddress);
                     }
                     Console.WriteLine("4: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                     switch (context.Request.RawUrl)
