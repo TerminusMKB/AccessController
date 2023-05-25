@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="converterAddress" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">192.168.101.12:7000</Value>
+      <Value Profile="(Default)">192.168.100.224:1000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

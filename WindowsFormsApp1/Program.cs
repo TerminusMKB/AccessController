@@ -167,23 +167,32 @@ namespace WindowsFormsApp1
                             Program.ZApi.clearAllKeys(clearAllKeysRequest.serialNumber);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
-                        case "/controller/setMode/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/setMode":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             SetModeRequest setModeRequest = JsonConvert.DeserializeObject<SetModeRequest>(body);
                             Program.ZApi.setControllerMode(setModeRequest.serialNumber, setModeRequest.mode);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
-                        case "/controller/setDateTime/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/setDateTime":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             SetDateTimeRequest setDateTimeRequest = JsonConvert.DeserializeObject<SetDateTimeRequest>(body);
                             Program.ZApi.setControllerDateTime(setDateTimeRequest.serialNumber, setDateTimeRequest.year, setDateTimeRequest.month, setDateTimeRequest.day, setDateTimeRequest.hour, setDateTimeRequest.minute, setDateTimeRequest.second);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
-                        case "/controller/getDateTime/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/getDateTime":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             GetDateTimeRequest getDateTimeRequest = JsonConvert.DeserializeObject<GetDateTimeRequest>(body);
                             ControllerDateTime controllerDateTime = Program.ZApi.getControllerDateTime(getDateTimeRequest.serialNumber);
                             responseBody = JsonConvert.SerializeObject(controllerDateTime);
@@ -248,6 +257,7 @@ namespace WindowsFormsApp1
                 log.Fatal("В настройках не указан адрес конвертера");
                 return;
             }
+            log.Info("Адрес конвертера: " + converterAddress);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new Form1());

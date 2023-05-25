@@ -15,9 +15,6 @@ namespace WindowsFormsApp1.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.6.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
-
-
-
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
         
         public static Settings Default {
@@ -28,7 +25,7 @@ namespace WindowsFormsApp1.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.101.12:7000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.100.224:1000")]
         public string converterAddress {
             get {
                 return ((string)(this["converterAddress"]));

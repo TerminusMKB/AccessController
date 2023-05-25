@@ -341,7 +341,7 @@ namespace Z
                 else {
                     _keyIndex = keyIndex;
                 }
-                Console.WriteLine("Пишем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //Console.WriteLine("Пишем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 //log.Info("Пишем");
                 hr = ZGIntf.ZG_Ctr_WriteKeys(ControllerHandler, _keyIndex, aKeys, 1, null, default(IntPtr), 0);
                 if (hr < 0)
