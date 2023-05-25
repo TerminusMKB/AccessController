@@ -12,8 +12,6 @@ namespace Z
     {
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private ZP_PORT_TYPE PortType = ZP_PORT_TYPE.ZP_PORT_IP;
-        private String Address = "192.168.100.224:1000";
         public IntPtr ConverterHandler = IntPtr.Zero;
         private List<ControllerInfoShort> tmpControllerInfoShortList;
 
@@ -31,29 +29,30 @@ namespace Z
                                                           "Matrix II Wi-Fi"
                                                       };
 
-        public void init() {
-            log.Info("init 1");
+        public void init(String proxyAddress) {
             if (!ConverterHandler.Equals(IntPtr.Zero)) {
                 return;
             }
-
-            log.Info("init 2");
             int hr = ZGIntf.ZG_Initialize(ZPIntf.ZP_IF_NO_MSG_LOOP);
             if (hr < 0)
             {
                 log.Fatal("Ошибка ZG_Initialize: " + hr);
                 throw new ZCommonException("Ошибка ZG_Initialize").setErrorCode(hr);
             }
-            log.Info("init 3");
             ZG_CVT_INFO ConverterInfo = new ZG_CVT_INFO();
             ZG_CVT_OPEN_PARAMS OpenParams = new ZG_CVT_OPEN_PARAMS();
-            OpenParams.nPortType = PortType;
-            OpenParams.pszName = @Address;
+            if (proxyAddress.Contains(":"))
+            {
+                OpenParams.nPortType = ZP_PORT_TYPE.ZP_PORT_IP;
+            }
+            else
+            {
+                OpenParams.nPortType = ZP_PORT_TYPE.ZP_PORT_COM;
+            }
+            OpenParams.pszName = @proxyAddress;
             OpenParams.nSpeed = ZG_CVT_SPEED.ZG_SPEED_57600;
 
-            log.Info("init 4");
             hr = ZGIntf.ZG_Cvt_Open(ref ConverterHandler, ref OpenParams, ConverterInfo);
-            log.Info("init 5");
             if (hr < 0)
             {
                 log.Fatal("Ошибка ZG_Cvt_Open: " + hr);
@@ -64,7 +63,6 @@ namespace Z
             if (ConverterHandler == IntPtr.Zero) {
                 return;
             }
-            log.Info("Действительно закрываем");
             int hr = ZGIntf.ZG_CloseHandle(ConverterHandler);
             if (hr < 0)
             {
@@ -106,6 +104,10 @@ namespace Z
         }
 
         public List<ControllerInfoShort> GetControllers() {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            ZG_CTR_MODE ControllerMode = ZG_CTR_MODE.ZG_MODE_UNDEF;
+            uint ControllerModeFlags = 0;
             tmpControllerInfoShortList = new List<ControllerInfoShort>();
             int hr = ZGIntf.ZG_Cvt_EnumControllers(ConverterHandler, tmpEnumConverters, IntPtr.Zero);
             if (hr < 0)
@@ -113,7 +115,148 @@ namespace Z
                 log.Fatal("Ошибка ZG_Cvt_EnumControllers (" + hr + ").");
                 throw new ZCommonException("Ошибка ZG_Cvt_EnumControllers").setErrorCode(hr);
             }
+            if (tmpControllerInfoShortList.Count > 0) {
+                for (int i = 0; i < tmpControllerInfoShortList.Count; i++)
+                {
+                    try
+                    {
+                        //Открываем контроллер
+                        hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, tmpControllerInfoShortList[i].serialNumber, ref ControllerInfo);
+                        if (hr < 0)
+                        {
+                            log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                            throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                        }
+                        //Читаем режим
+                        hr = ZGIntf.ZG_Ctr_GetCtrModeInfo(ControllerHandler, ref ControllerMode, ref ControllerModeFlags);
+                        if (hr < 0)
+                        {
+                            log.Fatal("Ошибка ZG_Ctr_GetCtrModeInfo (" + hr + ")");
+                            throw new ZCommonException("Ошибка ZG_Ctr_GetCtrModeInfo").setErrorCode(hr);
+                        }
+                        tmpControllerInfoShortList[i].mode = ControllerMode;
+                    }
+                    finally
+                    {
+                        //Автоматически закрываем контроллер
+                        if (ControllerHandler != IntPtr.Zero)
+                        {
+                            ZGIntf.ZG_CloseHandle(ControllerHandler);
+                        }
+                    }
+                }
+            }
             return tmpControllerInfoShortList;
+        }
+
+        public void setControllerMode(ushort serialNumber, ZG_CTR_MODE mode)
+        {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Читаем режим
+                hr = ZGIntf.ZG_Ctr_SetCtrMode(ControllerHandler, mode);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_SetCtrMode (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_SetCtrMode").setErrorCode(hr);
+                }
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
+        }
+
+        public void setControllerDateTime(ushort serialNumber, ushort year, ushort month, ushort day, ushort hour, ushort minute, ushort second)
+        {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Ставим контроллеру дату/время
+                ZG_CTR_CLOCK clock = new ZG_CTR_CLOCK();
+                clock.fStopped = false;
+                clock.nYear = year;
+                clock.nMonth = month;
+                clock.nDay = day;
+                clock.nHour = hour;
+                clock.nMinute = minute;
+                clock.nSecond = second;
+                hr = ZGIntf.ZG_Ctr_SetClock(ControllerHandler, ref clock);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_SetClock (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_SetClock").setErrorCode(hr);
+                }
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
+        }
+
+        public ControllerDateTime getControllerDateTime(ushort serialNumber)
+        {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Ставим контроллеру дату/время
+                ZG_CTR_CLOCK clock = new ZG_CTR_CLOCK();
+                hr = ZGIntf.ZG_Ctr_GetClock(ControllerHandler, ref clock);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_GetClock (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_GetClock").setErrorCode(hr);
+                }
+                ControllerDateTime response = new ControllerDateTime();
+                response.year = clock.nYear;
+                response.month = clock.nMonth;
+                response.day = clock.nDay;
+                response.hour = clock.nHour;
+                response.minute = clock.nMinute;
+                response.second = clock.nSecond;
+                return response;
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
         }
 
         public List<ControllerKey> getKeys(ushort serialNumber)
@@ -173,8 +316,6 @@ namespace Z
             try
             {
                 //Открываем контроллер
-                Console.WriteLine("Открываем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
-                //log.Info("Открываем");
                 int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
                 if (hr < 0)
                 {
@@ -211,15 +352,11 @@ namespace Z
             }
             finally
             {
-                Console.WriteLine("Закрываем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
-                //log.Info("Закрываем");
                 //Автоматически закрываем контроллер
                 if (ControllerHandler != IntPtr.Zero)
                 {
                     ZGIntf.ZG_CloseHandle(ControllerHandler);
                 }
-                Console.WriteLine("Закончили: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
-                //log.Info("Закончили");
             }
         }
 
@@ -303,8 +440,6 @@ namespace Z
                 int writeIndex = 0;
                 int _readIndex = 0;
                 hr = ZGIntf.ZG_Ctr_ReadEventIdxs(ControllerHandler, ref writeIndex, ref _readIndex);
-                log.Info("returned writeIndex: " + writeIndex);
-                log.Info("returned _readIndex: " + _readIndex);
                 //log.Info("WriteIndex: " + writeIndex);
                 if (lastReadIndex == -1)
                 {
@@ -313,7 +448,6 @@ namespace Z
                     if (writeIndex > 0)
                     {
                         FetchEventsResult fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
-                        //log.Info(">>> " + fetchEventsResult.items.Count);
                         if (fetchEventsResult.items.Count > 0)
                         {
                             result.items = fetchEventsResult.items;
@@ -581,6 +715,8 @@ namespace Z
         public int serialNumber;
         public int maxKeys;
         public int maxEvents;
+
+        public ZG_CTR_MODE mode;
     }
 
     public class ControllerEvent {
@@ -590,6 +726,15 @@ namespace Z
         public byte minute;
         public byte second;
         public int keyIndex;
+    }
+
+    public class ControllerDateTime {
+        public ushort year;
+        public ushort month;
+        public ushort day;
+        public ushort hour;
+        public ushort minute;
+        public ushort second;
     }
 
     public class ZCommonException : Exception {
