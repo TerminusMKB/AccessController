@@ -31,5 +31,14 @@ namespace WindowsFormsApp1.Properties {
                 return ((string)(this["converterAddress"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("27080")]
+        public int serverPort {
+            get {
+                return ((int)(this["serverPort"]));
+            }
+        }
     }
 }

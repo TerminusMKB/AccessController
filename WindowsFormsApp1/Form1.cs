@@ -75,7 +75,7 @@ namespace WindowsFormsApp1
         {
             Program.form1 = (Form1)sender;
             Program.listener = new HttpListener();
-            Program.listener.Prefixes.Add("http://*:27099/");
+            Program.listener.Prefixes.Add("http://*:" + Properties.Settings.Default.serverPort + "/");
             try
             {
                 Program.listener.Start();

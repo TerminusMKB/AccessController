@@ -41,7 +41,7 @@ namespace WindowsFormsApp1
 
         public static void ProcessRequest(HttpListenerContext context)
         {
-            Console.WriteLine("Входящий запрос: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+            //Console.WriteLine("Входящий запрос: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
             lock (Program.isActiveRequestLocker) {
                 Program.isActiveRequest = true;
             }
@@ -52,7 +52,7 @@ namespace WindowsFormsApp1
                 byte[] b;
                 String responseBody = "";
                 StatusResponse statusResponse = new StatusResponse();
-                Console.WriteLine("1: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //Console.WriteLine("1: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 if (!(context.Request.HttpMethod.Equals("GET") && context.Request.RawUrl.Equals("/ping/") || context.Request.HttpMethod.Equals("POST")))
                 {
                     output = context.Response.OutputStream;
@@ -64,17 +64,17 @@ namespace WindowsFormsApp1
                     context.Response.Close();
                     return;
                 }
-                Console.WriteLine("2: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //Console.WriteLine("2: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 String body = new StreamReader(context.Request.InputStream).ReadToEnd();
                 output = context.Response.OutputStream;
-                Console.WriteLine("3: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //Console.WriteLine("3: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 try
                 {
                     lock (Program.initLocker)
                     {
                         Program.ZApi.init(converterAddress);
                     }
-                    Console.WriteLine("4: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                    //Console.WriteLine("4: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                     switch (context.Request.RawUrl)
                     {
                         case "/ping":
@@ -109,7 +109,7 @@ namespace WindowsFormsApp1
                             }
                             GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
                             GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
-                            GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
+                            GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond);
                             getUnreadEventsResponse.items = getUnreadEventsResult.items;
                             getUnreadEventsResponse.lastReadIndex = getUnreadEventsResult.lastReadIndex;
                             getUnreadEventsResponse.lastReadMonth = getUnreadEventsResult.lastReadMonth;
@@ -136,14 +136,11 @@ namespace WindowsFormsApp1
                                 Program.requestsCount++;
                                 Program.lastRequestDateTime = DateTime.Now;
                             }
-                            Console.WriteLine("5: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             AddKeyRequest addKeyRequest = JsonConvert.DeserializeObject<AddKeyRequest>(body);
-                            Console.WriteLine("6: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             if (addKeyRequest.code == null || addKeyRequest.code.Trim().Equals("") || !addKeyRequest.code.Contains(","))
                             {
                                 throw new DataErrorException("Поле code должно содержать код ключа в формате ###,#####");
                             }
-                            Console.WriteLine("7: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.code);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
@@ -338,7 +335,6 @@ namespace WindowsFormsApp1
         public int lastReadHour;
         public int lastReadMinute;
         public int lastReadSecond;
-        public int maxEvents;
     }
 
     public class GetUnreadEventsResponse

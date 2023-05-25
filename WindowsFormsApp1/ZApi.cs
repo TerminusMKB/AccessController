@@ -421,7 +421,7 @@ namespace Z
             }
         }
 
-        public GetUnreadEventsResult getUnreadEvents(ushort serialNumber, int lastReadIndex, int lastReadMonth, int lastReadDay, int lastReadHour, int lastReadMinute, int lastReadSecond, int maxEvents)
+        public GetUnreadEventsResult getUnreadEvents(ushort serialNumber, int lastReadIndex, int lastReadMonth, int lastReadDay, int lastReadHour, int lastReadMinute, int lastReadSecond)
         {
             IntPtr ControllerHandler = new IntPtr(0);
             ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
@@ -485,7 +485,7 @@ namespace Z
                     {
                         //log.Info("Последнее событие отличается");
                         //Читаем хвост от следующего индекса записи до конца списка
-                        fetchEventsResult = fetchEventsBlock(ControllerHandler, writeIndex, maxEvents - writeIndex);
+                        fetchEventsResult = fetchEventsBlock(ControllerHandler, writeIndex, ControllerInfo.nMaxEvents - writeIndex);
                         if (fetchEventsResult.items.Count > 0)
                         {
                             result.items.AddRange(fetchEventsResult.items);
@@ -558,9 +558,9 @@ namespace Z
                         {
                             //Индекс записи до шёл до конца списка и теперь отстаёт от нас
                             //Читаем вначале хвост от нас до конца списка
-                            if (lastReadIndex < maxEvents - 1)
+                            if (lastReadIndex < ControllerInfo.nMaxEvents - 1)
                             {
-                                fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, maxEvents - lastReadIndex - 1);
+                                fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, ControllerInfo.nMaxEvents - lastReadIndex - 1);
                                 if (fetchEventsResult.items.Count > 0)
                                 {
                                     result.items.AddRange(fetchEventsResult.items);
