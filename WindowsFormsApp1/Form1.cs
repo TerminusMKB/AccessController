@@ -98,10 +98,6 @@ namespace WindowsFormsApp1
             var listenerThread = new Thread(listenerThreadWatcher);
             listenerThread.IsBackground = true;
             listenerThread.Start();
-            //Program.ZApi.addKey(31351, -1, "213,15275");
-            //Program.ZApi.deleteKey(31351, 455);
-            //Program.ZApi.deleteKey(31351, 433);
-            //Program.ZApi.getKeys(31351, 1, 2);
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -111,10 +107,25 @@ namespace WindowsFormsApp1
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            Program.form1.labelRequestsCount.Text = Program.requestsCount.ToString();
-            Program.form1.labelControllerErrors.Text = Program.controllerErrors.ToString();
-            if (Program.lastRequestDateTime.Year > 1) {
-                Program.form1.labelLastRequestDateTime.Text = Program.lastRequestDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+            lock (Program.lastRequestDateTimeLocker)
+            {
+                Program.form1.labelRequestsCount.Text = Program.requestsCount.ToString();
+                Program.form1.labelControllerErrors.Text = Program.controllerErrors.ToString();
+                if (Program.lastRequestDateTime.Year > 1) {
+                    Program.form1.labelLastRequestDateTime.Text = Program.lastRequestDateTime.ToString("yyyy-MM-dd HH:mm:ss");
+                }
+                if (DateTime.Now.AddSeconds(-7) > Program.lastRequestDateTime) {
+                    lock (Program.isActiveRequestLocker)
+                    {
+                        if (!Program.isActiveRequest)
+                        {
+                            lock (Program.initLocker)
+                            {
+                                Program.ZApi.close();
+                            }
+                        }
+                    }
+                }
             }
         }
     }

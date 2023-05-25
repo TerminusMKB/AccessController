@@ -29,14 +29,26 @@ namespace WindowsFormsApp1
 
         public static ZApi ZApi = new ZApi();
 
+        public static bool isActiveRequest = false;
+
+        public static object isActiveRequestLocker = new object();
+        public static object lastRequestDateTimeLocker = new object();
+        public static object initLocker = new object();
+
         public static void ProcessRequest(HttpListenerContext context)
         {
+            Console.WriteLine("Входящий запрос: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+            lock (Program.isActiveRequestLocker) {
+                Program.isActiveRequest = true;
+            }
+            //log.Info("Входящий запрос");
             try
             {
                 Stream output;
                 byte[] b;
                 String responseBody = "";
                 StatusResponse statusResponse = new StatusResponse();
+                Console.WriteLine("1: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 if (!(context.Request.HttpMethod.Equals("GET") && context.Request.RawUrl.Equals("/ping/") || context.Request.HttpMethod.Equals("POST")))
                 {
                     output = context.Response.OutputStream;
@@ -48,34 +60,49 @@ namespace WindowsFormsApp1
                     context.Response.Close();
                     return;
                 }
+                Console.WriteLine("2: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 String body = new StreamReader(context.Request.InputStream).ReadToEnd();
                 output = context.Response.OutputStream;
+                Console.WriteLine("3: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                 try
                 {
-                    Program.ZApi.init();
+                    lock (Program.initLocker)
+                    {
+                        Program.ZApi.init();
+                    }
+                    Console.WriteLine("4: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                     switch (context.Request.RawUrl)
                     {
-                        case "/ping/":
+                        case "/ping":
                             responseBody = "Pong";
                             break;
-                        case "/converter/getControllers/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/converter/getControllers":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             GetControllersResponse getControllersResponse = new GetControllersResponse();
                             getControllersResponse.items = Program.ZApi.GetControllers();
                             responseBody = JsonConvert.SerializeObject(getControllersResponse);
                             break;
-                        case "/controller/getEvents/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/getEvents":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             GetEventsRequest getEventsRequest = JsonConvert.DeserializeObject<GetEventsRequest>(body);
                             GetEventsResponse getEventsResponse = new GetEventsResponse();
                             getEventsResponse.items = Program.ZApi.getEvents(getEventsRequest.serialNumber, getEventsRequest.eventIndex, getEventsRequest.eventCount);
                             responseBody = JsonConvert.SerializeObject(getEventsResponse);
                             break;
-                        case "/controller/getUnreadEvents/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/getUnreadEvents":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             GetUnreadEventsRequest getUnreadEventsRequest = JsonConvert.DeserializeObject<GetUnreadEventsRequest>(body);
                             GetUnreadEventsResponse getUnreadEventsResponse = new GetUnreadEventsResponse();
                             GetUnreadEventsResult getUnreadEventsResult = Program.ZApi.getUnreadEvents(getUnreadEventsRequest.serialNumber, getUnreadEventsRequest.lastReadIndex, getUnreadEventsRequest.lastReadMonth, getUnreadEventsRequest.lastReadDay, getUnreadEventsRequest.lastReadHour, getUnreadEventsRequest.lastReadMinute, getUnreadEventsRequest.lastReadSecond, getUnreadEventsRequest.maxEvents);
@@ -88,30 +115,52 @@ namespace WindowsFormsApp1
                             getUnreadEventsResponse.lastReadSecond = getUnreadEventsResult.lastReadSecond;
                             responseBody = JsonConvert.SerializeObject(getUnreadEventsResponse);
                             break;
-                        case "/controller/getKeys/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/getKeys":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             GetKeysRequest getKeysRequest = JsonConvert.DeserializeObject<GetKeysRequest>(body);
                             GetKeysResponse getKeysResponse = new GetKeysResponse();
                             getKeysResponse.items = Program.ZApi.getKeys(getKeysRequest.serialNumber, getKeysRequest.keyIndex, getKeysRequest.keyCount);
                             responseBody = JsonConvert.SerializeObject(getKeysResponse);
                             break;
-                        case "/controller/addKey/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/addKey":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
+                            Console.WriteLine("5: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             AddKeyRequest addKeyRequest = JsonConvert.DeserializeObject<AddKeyRequest>(body);
+                            Console.WriteLine("6: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             if (addKeyRequest.code == null || addKeyRequest.code.Trim().Equals("") || !addKeyRequest.code.Contains(","))
                             {
                                 throw new DataErrorException("Поле code должно содержать код ключа в формате ###,#####");
                             }
+                            Console.WriteLine("7: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
                             Program.ZApi.addKey(addKeyRequest.serialNumber, addKeyRequest.keyIndex, addKeyRequest.code);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
-                        case "/controller/clearKey/":
-                            Program.requestsCount++;
-                            Program.lastRequestDateTime = DateTime.Now;
+                        case "/controller/clearKey":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
                             ClearKeyRequest clearKeyRequest = JsonConvert.DeserializeObject<ClearKeyRequest>(body);
                             Program.ZApi.clearKey(clearKeyRequest.serialNumber, clearKeyRequest.keyIndex);
+                            responseBody = JsonConvert.SerializeObject(statusResponse);
+                            break;
+                        case "/controller/clearAllKeys":
+                            lock (Program.lastRequestDateTimeLocker)
+                            {
+                                Program.requestsCount++;
+                                Program.lastRequestDateTime = DateTime.Now;
+                            }
+                            ClearAllKeysRequest clearAllKeysRequest = JsonConvert.DeserializeObject<ClearAllKeysRequest>(body);
+                            Program.ZApi.clearAllKeys(clearAllKeysRequest.serialNumber);
                             responseBody = JsonConvert.SerializeObject(statusResponse);
                             break;
                     }
@@ -129,7 +178,8 @@ namespace WindowsFormsApp1
                 {
                     responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("REQUEST_ERROR").setErrorString(e.Message));
                 }
-                catch (Exception e) {
+                catch (Exception e)
+                {
                     responseBody = JsonConvert.SerializeObject(new DataError().setApiErrorType("INTERNAL_ERROR").setErrorString(e.Message));
                     throw e;
                 }
@@ -145,11 +195,18 @@ namespace WindowsFormsApp1
                         context.Response.Close();
                     }
                     catch (HttpListenerException e) { }
-                    Program.ZApi.close();
+                    //Program.ZApi.close();
                 }
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 log.Fatal("FATAL", e);
+            }
+            finally {
+                lock (Program.isActiveRequestLocker)
+                {
+                    Program.isActiveRequest = false;
+                }
             }
         }
 
@@ -174,6 +231,11 @@ namespace WindowsFormsApp1
     {
         public ushort serialNumber;
         public int keyIndex;
+    }
+
+    public class ClearAllKeysRequest
+    {
+        public ushort serialNumber;
     }
 
     public class GetKeysRequest {

@@ -18,7 +18,13 @@ namespace ZGuard
         ZG_CVT_Z397_IP,         // Z-397 IP
         ZG_CVT_Z397_WEB,		// Z-397 Web
         ZG_CVT_Z5R_WEB,         // Z5R Web
-        ZG_CVT_MATRIX2WIFI		// Matrix II Wi-Fi
+        ZG_CVT_MATRIX2WIFI,     // Matrix II Wi-Fi
+        ZG_CVT_MATRIX6WIFI,     // Matrix VI Wi-Fi
+        ZG_CVT_Z5R_WEB_BT,      // Z5R-WEB BT
+        ZG_CVT_Z5R_WIFI,        // Z5R Wi-Fi
+        ZG_CVT_MATRIX2EHWEB,    // Matrix-II EH Web
+        ZG_CVT_MATRIX6EHWEB,    // Matrix-VI EH Web
+        ZG_CVT_Z5R_WEB_MINI		// Z5R Web mini
     }
     // Режим конвертера Z397 Guard
     public enum ZG_GUARD_MODE
@@ -47,17 +53,32 @@ namespace ZGuard
         ZG_CTR_GUARDNET,		// Guard Net
         ZG_CTR_Z9,			    // Z-9 EHT Net
         ZG_CTR_EUROLOCK,	    // EuroLock EHT net
-        ZG_CTR_Z5RWEB,		    // Z5R Web
-        ZG_CTR_MATRIX2WIFI		// Matrix II Wi-Fi
+        ZG_CTR_Z5RWEB,          // Z5R Web
+        ZG_CTR_MATRIX2WIFI,     // Matrix II Wi-Fi
+        ZG_CTR_MATRIX6NFC,      // Matrix-VI NFC Net 8k
+        ZG_CTR_MATRIX6EHK,      // Matrix-VI EHK Net 2k
+        ZG_CTR_MATRIX6WIFI,     // Matrix VI Wi-Fi
+        ZG_CTR_Z5R_WEB_BT,      // Z5R-WEB BT
+        ZG_CTR_Z5R_WIFI,        // Z5R Wi-Fi
+        ZG_CTR_MATRIX2EHWEB,    // Matrix-II EH Web
+        ZG_CTR_MATRIX6EHWEB,    // Matrix-VI EH Web
+        ZG_CTR_Z5R_WEB_MINI,	// Z5R Web mini
+        ZG_CTR_Z5RNET16K		// Z-5R Net 16k
     }
     // Подтип контроллера
     public enum ZG_CTR_SUB_TYPE
     {
-        ZG_CS_UNDEF = 0,        // Не определено
-        ZG_CS_DOOR,				// Дверь
-        ZG_CS_TURNSTILE,		// Турникет
-        ZG_CS_GATEWAY,			// Шлюз
-        ZG_CS_BARRIER			// Шлакбаум
+        ZG_CS_UNDEF = 0,            // Не определено
+        ZG_CS_DOOR,				    // Дверь
+        ZG_CS_TURNSTILE,		    // Турникет
+        ZG_CS_GATEWAY,			    // Шлюз
+        ZG_CS_BARRIER,              // Шлакбаум
+        ZG_CS_ELECTROMAGNETIC,      // Электромагнитный замок
+        ZG_CS_ELECTROMECHANICAL,    // Электромеханический замок
+        ZG_CS_MOTORTWORELAYS,       // Моторный через два реле
+        ZG_CS_MOTORONERELAY,        // Моторный через одно реле
+        ZG_CS_ELECTRICAL,           // Электроконтроль
+        ZG_CS_AUTOCONTROL           // Автоконтроль
     }
     // Тип ключа контроллера
     public enum ZG_CTR_KEY_TYPE
@@ -204,6 +225,16 @@ namespace ZGuard
         ZG_HMODE_RESERVED		// Резерв
     }
 
+    // Флаги параметров маски для ZG_Ctr_WriteLockTimes
+    [Flags]
+    public enum ZGLTMF : uint
+    {
+        ZG_LTMF_OPENTIME = 0x00000001,      // Время открытия двери
+        ZG_LTMF_LETTIME = 0x00000002,       // Время контроля открытия
+        ZG_LTMF_MAXTIME = 0x00000004,       // Время контроля закрытия
+        ZG_LTMF_BIGTIME = 0x00000008        // Использовать формат большого времени по возможности
+    }
+
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate bool ZG_PROCESSCALLBACK(int nPos, int nMax, IntPtr pUserData);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
@@ -214,13 +245,6 @@ namespace ZGuard
     public delegate bool ZG_ENUMCTRKEYSPROC(int nIdx, ref ZG_CTR_KEY pKey, int nPos, int nMax, IntPtr pUserData);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
     public delegate bool ZG_ENUMCTREVENTSPROC(int nIdx, ref ZG_CTR_EVENT pEvent, int nPos, int nMax, IntPtr pUserData);
-    #endregion
-
-    #region Устаревшие типы
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate bool ZG_ENUMCVTSPROC(ref ZG_ENUM_CVT_INFO pInfo, ref ZP_PORT_INFO pPort, IntPtr pUserData);
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate bool ZG_ENUMIPCVTSPROC(ref ZG_ENUM_IPCVT_INFO pInfo, ref ZP_PORT_INFO pPort, IntPtr pUserData);
     #endregion
 
     #region Структуры
@@ -319,7 +343,7 @@ namespace ZGuard
         public ZG_CTR_TYPE nType;                      // Тип контроллера
         public byte nTypeCode;                         // Код типа контроллера
         public byte nAddr;                             // Сетевой адрес
-        public UInt16 nSn;                             // Заводской номер
+        public int nSn;                                // Заводской номер
         public UInt16 nVersion;                        // Версия прошивки
         public int nMaxKeys;                           // Максимум ключей
         public int nMaxEvents;                         // Максимум событий
@@ -333,13 +357,12 @@ namespace ZGuard
         public ZG_CTR_TYPE nType;                      // Тип контроллера
         public byte nTypeCode;                         // Код типа контроллера
         public byte nAddr;                             // Сетевой адрес
-        public UInt16 nSn;                             // Заводской номер
+        public int nSn;                                // Заводской номер
         public UInt16 nVersion;                        // Версия прошивки
         public int nInfoLineCount;                     // Количество строк с информацией
         public int nMaxKeys;                           // Максимум ключей
         public int nMaxEvents;                         // Максимум событий
         public UInt32 nFlags;                          // Флаги контроллера (ZG_CTR_F_...)
-        UInt16 Reserved;
         [MarshalAs(UnmanagedType.LPTStr)]
         public string pszLinesBuf;                     // Буфер для информационных строк
         public int nLinesBufMax;                       // Размер буфера в символах, включая завершающий '\0'
@@ -528,13 +551,50 @@ namespace ZGuard
             nClockOffs = _nClockOffs;
         }
     }
+    // Флаги маски для ZG_CTR_CONFIGURATION::nMask
+    [Flags]
+    public enum ZGCTRCFGM : uint
+    {
+        ZG_CTRCFGM_RDWIEGAND = 0x00000001,      // Режим считывателей: =True Wiegand, иначе - Dallas
+        ZG_CTRCFGM_WIEGAND26 = 0x00000002,      // Wiegand-26
+        ZG_CTRCFGM_DUALBANK = 0x00000004,       // 2 банка
+        ZG_CTRCFGM_JOIN = 0x00000008,           // Режим Join
+        ZG_CTRCFGM_APB = 0x00000010,            // Антипассбэк
+        ZG_CTRCFGM_DUALZONE = 0x00000020,       // Два набора временных зон
+        ZG_CTRCFGM_FLAGS = 0x0000003F,          // nFlags. Флаги
+        ZG_CTRCFGM_BANKSIZEN = 0x00010000,      // Номер размера 1 банка: =0 512, =1 1024, =2 2048, =3 4096, =4 8192
+        ZG_CTRCFGM_PASSPTTYPE = 0x00020000,     // Тип точки прохода
+        ZG_CTRCFGM_NOCHECKCRC = 0x80000000      // Не проверять контрольную сумму
+    }
+    // Флаги конфигурации контроллера
+    [Flags]
+    public enum ZGCTRCFGF : uint
+    {
+        ZG_CTRCFGF_RDWIEGAND = 0x00000001,      // Режим считывателей: =True Wiegand, иначе - Dallas
+        ZG_CTRCFGF_WIEGAND26 = 0x00000002,      // Wiegand-26
+        ZG_CTRCFGF_DUALBANK = 0x00000004,       // 2 банка
+        ZG_CTRCFGF_JOIN = 0x00000008,           // Режим Join
+        ZG_CTRCFGF_APB = 0x00000010,            // Антипассбэк
+        ZG_CTRCFGF_DUALZONE = 0x00000020        // Два набора временных зон
+    }
+    // Конфигурация контроллера
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    public struct ZG_CTR_CONFIGURATION
+    {
+        public ZG_CTR_TYPE nModel;                      // Модель контроллера
+        public ZGCTRCFGM nMask;                         // Маска параметров для получения/установки
+
+        public ZGCTRCFGF nFlags;                        // Флаги конфигурации контроллера
+        public int nBankSizeN;                          // Номер размера 1 банка: =0 512, =1 1024, =2 2048, =3 4096, =4 8192
+        public ZG_CTR_SUB_TYPE nPassPtType;             // Тип точки прохода
+    }
     #endregion
 
     class ZGIntf
     {
         #region Совместимая версия SDK
         public const int ZG_SDK_VER_MAJOR = 3;
-        public const int ZG_SDK_VER_MINOR = 35;
+        public const int ZG_SDK_VER_MINOR = 39;
         #endregion
 
         #region Коды ошибок
@@ -569,6 +629,8 @@ namespace ZGuard
         public static readonly int ZG_E_FWTOOLARGE = unchecked((int)0x80040316);            // Слишком большой размер данных прошивки (при прошивке)
         public static readonly int ZG_E_FWSEQUENCEDATA = unchecked((int)0x80040317);        // Некорректная последовательность данных (при прошивке)
         public static readonly int ZG_E_FWDATAINTEGRITY = unchecked((int)0x80040318);       // Целостность данных нарушена (при прошивке)
+        public static readonly int ZG_E_WRONGCRC = unchecked((int)0x80040319);              // Неверная контрольная сумма
+        public static readonly int ZG_E_CTRISALREADYOPEN = unchecked((int)0x8004031A);      // Контроллер уже открыт функцией ZG_Ctr_Open
         #endregion
 
         #region Значения по умолчанию
@@ -640,6 +702,11 @@ namespace ZGuard
         public const uint ZG_CTR_F_ELECTRO = 0x10;          // Функция ElectroControl (для Matrix II Net)
         public const uint ZG_CTR_F_MODES = 0x20;            // Поддержка режимов прохода
         public const uint ZG_CTR_F_DUAL_ZONE = 0x40;        // Поддержка двух наборов временных зон
+        public const uint ZG_CTR_F_APB = 0x0080;            // Поддержка AntiPassBack (APB)
+        public const uint ZG_CTR_F_BIGTIME = 0x0100;        // Поддержка больших времен замка
+        public const uint ZG_CTR_F_EXTASK = 0x0200;         // Поддержка запроса ExtAsk
+        public const uint ZG_CTR_F_DUALKEY = 0x0400;        // Поддержка двойных карт (ключей с флагом ZG_KF_DUAL)
+        public const uint ZG_CTR_F_BOOTMODE = 0x8000;       // Устройство в режиме "boot"
         #endregion
 
         #region Флаги для функции ZG_Ctr_ReadElectroConfig, ZG_Ctr_GetElectroState, ZG_Ctr_DecodeEcEvent (конфигурация электропитания)
@@ -901,7 +968,7 @@ namespace ZGuard
 
         [DllImport(ZgDllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_GetProxyConverters")]
         public static extern int ZG_GetProxyConverters(IntPtr hHandle,
-            [In, Out] UInt16[] pSnBuf, int nBufSize, ref int nRCount,
+            [In, Out] int[] pSnBuf, int nBufSize, ref int nRCount,
             string pIpAddr, [In] [MarshalAs(UnmanagedType.LPStr)] string pActCode,
             [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null);
 
@@ -963,7 +1030,7 @@ namespace ZGuard
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_FindNextController")]
         public static extern int ZG_Cvt_FindNextController(IntPtr hHandle, 
-            [In, Out] [MarshalAs(UnmanagedType.LPStruct)] ZG_FIND_CTR_INFO pInfo);
+            ref ZG_FIND_CTR_INFO pInfo);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetInformation")]
         public static extern int ZG_Cvt_GetInformation(IntPtr hHandle, ref ZG_CVT_INFO pInfo);
@@ -1004,39 +1071,40 @@ namespace ZGuard
         public static extern int ZG_Cvt_GetAllLicenses(IntPtr hHandle, [In, Out] ZG_CVT_LIC_SINFO[] pBuf, int nBufSize, ref int pCount);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetShortInfo")]
-        public static extern int ZG_Cvt_GetShortInfo(IntPtr hHandle, ref UInt16 pSn, ref ZG_GUARD_MODE pMode);
+        public static extern int ZG_Cvt_GetShortInfo(IntPtr hHandle, ref int pSn, ref ZG_GUARD_MODE pMode);
 
         [DllImport(ZgDllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetLongInfo")]
-        public static extern int ZG_Cvt_GetLongInfo(IntPtr hHandle, ref UInt16 pSn, ref UInt32 pVersion, 
+        public static extern int ZG_Cvt_GetLongInfo(IntPtr hHandle, ref int pSn, ref UInt32 pVersion, 
             ref ZG_GUARD_MODE pMode, ref string pBuf, int nBufSize, ref int pLen);
 
         [DllImport(ZgDllName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_UpdateCtrFirmware")]
-        public static extern int ZG_Cvt_UpdateCtrFirmware(IntPtr hHandle, UInt16 nSn,
+        public static extern int ZG_Cvt_UpdateCtrFirmware(IntPtr hHandle, int nSn,
             [In] byte[] pData, int nCount, string pszInfoStr, ZG_PROCESSCALLBACK pfnCallback, IntPtr pUserData = default(IntPtr), ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_SetCtrAddrBySn")]
-        public static extern int ZG_Cvt_SetCtrAddrBySn(IntPtr hHandle, UInt16 nSn, byte nNewAddr, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
+        public static extern int ZG_Cvt_SetCtrAddrBySn(IntPtr hHandle, int nSn, byte nNewAddr, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_SetCtrAddr")]
         public static extern int ZG_Cvt_SetCtrAddr(IntPtr hHandle, byte nOldAddr, byte nNewAddr, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetCtrInfoNorm")]
-        public static extern int ZG_Cvt_GetCtrInfoNorm(IntPtr hHandle, byte nAddr, ref byte pTypeCode, ref UInt16 pSn, ref UInt16 pVersion, ref int pInfoLines, ref UInt32 pFlags, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
+        public static extern int ZG_Cvt_GetCtrInfoNorm(IntPtr hHandle, byte nAddr, ref byte pTypeCode, ref int pSn, ref UInt16 pVersion, ref int pInfoLines, ref UInt32 pFlags, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetCtrInfoAdv")]
-        public static extern int ZG_Cvt_GetCtrInfoAdv(IntPtr hHandle, byte nAddr, ref byte pTypeCode, ref UInt16 pSn, ref UInt16 pVersion, ref UInt32 pFlags, ref int pEvWrIdx, ref int pEvRdIdx);
+        public static extern int ZG_Cvt_GetCtrInfoAdv(IntPtr hHandle, byte nAddr, ref byte pTypeCode, ref int pSn, ref UInt16 pVersion, ref UInt32 pFlags, ref int pEvWrIdx, ref int pEvRdIdx);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetCtrInfoBySn")]
-        public static extern int ZG_Cvt_GetCtrInfoBySn(IntPtr hHandle, UInt16 nSn, ref byte pTypeCode, ref byte pAddr, ref UInt16 pVersion, ref int pInfoLines, ref UInt32 pFlags, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
+        public static extern int ZG_Cvt_GetCtrInfoBySn(IntPtr hHandle, int nSn, ref byte pTypeCode, ref byte pAddr, ref UInt16 pVersion, ref int pInfoLines, ref UInt32 pFlags, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetCtrInfoLine")]
-        public static extern int ZG_Cvt_GetCtrInfoLine(IntPtr hHandle, UInt16 nSn, int nLineN, ref string pBuf, int nBufSize, ref int pLen, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
+        public static extern int ZG_Cvt_GetCtrInfoLine(IntPtr hHandle, int nSn, int nLineN, ref string pBuf, int nBufSize, ref int pLen, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Cvt_GetCtrVersion")]
-        public static extern int ZG_Cvt_GetCtrVersion(IntPtr hHandle, byte nAddr, ref byte[] pVerData5, [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null);
+        //public static extern int ZG_Cvt_GetCtrVersion(IntPtr hHandle, byte nAddr, ref byte[] pVerData5, [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null);
+        public static extern int ZG_Cvt_GetCtrVersion(IntPtr hHandle, byte nAddr, ref UInt64 pVerData5, [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_Open")]
-        public static extern int ZG_Ctr_Open(ref IntPtr hHandle, IntPtr hCvtHandle, byte nAddr, UInt16 nSn,
+        public static extern int ZG_Ctr_Open(ref IntPtr hHandle, IntPtr hCvtHandle, byte nAddr, int nSn,
             ref ZG_CTR_INFO pInfo, ZG_CTR_TYPE nModel = ZG_CTR_TYPE.ZG_CTR_UNDEF);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_GetInformation")]
@@ -1061,9 +1129,6 @@ namespace ZGuard
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_OpenLock")]
         public static extern int ZG_Ctr_OpenLock(IntPtr hHandle, int nLockN=0);
-
-        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_CloseLock")]
-        public static extern int ZG_Ctr_CloseLock(IntPtr hHandle);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_EnableEmergencyUnlocking")]
         public static extern int ZG_Ctr_EnableEmergencyUnlocking(IntPtr hHandle, bool fEnable=true);
@@ -1095,7 +1160,7 @@ namespace ZGuard
             ref UInt32 pOpenMs, ref UInt32 pLetMs, ref UInt32 pMaxMs, int nBankN = 0);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_WriteLockTimes")]
-        public static extern int ZG_Ctr_WriteLockTimes(IntPtr hHandle, UInt32 nMask,
+        public static extern int ZG_Ctr_WriteLockTimes(IntPtr hHandle, ZGLTMF nMask,
             UInt32 nOpenMs, UInt32 nLetMs, UInt32 nMaxMs, int nBankN = 0);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_ReadTimeZones")]
@@ -1125,14 +1190,17 @@ namespace ZGuard
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_WriteKeys")]
         public static extern int ZG_Ctr_WriteKeys(IntPtr hHandle, int nIdx,
             [In, Out] ZG_CTR_KEY[] pKeys, int nCount,
-            ZG_PROCESSCALLBACK pfnCallback, IntPtr pUserData = default(IntPtr), int nBankN = 0, bool fUpdateTop=true);
+            ZG_PROCESSCALLBACK pfnCallback, IntPtr pUserData = default(IntPtr), int nBankN = 0);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_ClearKeys")]
         public static extern int ZG_Ctr_ClearKeys(IntPtr hHandle, int nIdx, int nCount,
-            ZG_PROCESSCALLBACK pfnCallback, IntPtr pUserData = default(IntPtr), int nBankN = 0, bool fUpdateTop = true);
+            ZG_PROCESSCALLBACK pfnCallback, IntPtr pUserData = default(IntPtr), int nBankN = 0);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_GetKeyTopIndex")]
         public static extern int ZG_Ctr_GetKeyTopIndex(IntPtr hHandle, ref int pIdx, int nBankN = 0);
+
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_SetKeyTopIndex")]
+        public static extern int ZG_Ctr_SetKeyTopIndex(IntPtr hHandle, int nIdx, int nBankN = 0);
 
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_EnumKeys")]
         public static extern int ZG_Ctr_EnumKeys(IntPtr hHandle, int nStart,
@@ -1340,278 +1408,66 @@ namespace ZGuard
         [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_SetElectroPower")]
         public static extern int ZG_Ctr_SetElectroPower(IntPtr hHandle, bool fOn=true);
 
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_ReadApbTime")]
+        /// <summary>
+        /// Возвращает время антипассбэк в минутах. Актуально, когда установлен флаг ZG_CTR_F_APB
+        /// </summary>
+        /// <param name="hHandle">Дескриптор контроллера</param>
+        /// <param name="pMinutes">Время антипассбэк. Если =-1, то не используется</param>
+        /// <returns></returns>
+        public static extern int ZG_Ctr_ReadApbTime(IntPtr hHandle, ref uint pMinutes);
 
-        // Устаревшие функции
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_WriteApbTime")]
+        /// <summary>
+        /// Устанавливает время антипассбэк в минутах. Актуально, когда установлен флаг ZG_CTR_F_APB
+        /// </summary>
+        /// <param name="hHandle">Дескриптор контроллера</param>
+        /// <param name="nMinutes">Время антипассбэк. Если =-1, то не используется</param>
+        /// <returns></returns>
+        public static extern int ZG_Ctr_WriteApbTime(IntPtr hHandle, uint nMinutes);
 
-        [Obsolete("use ZG_DD_SetNotification")]
-        public static int ZG_FindNotification(ref IntPtr pHandle, ref ZP_DD_NOTIFY_SETTINGS pSettings, bool fSerial, bool fIP)
-        {
-            return ZG_SetNotification(ref pHandle, ref pSettings, fSerial, fIP);
-        }
-        [Obsolete("use ZG_GetNextMessage")]
-        public static int ZG_ProcessMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
-        {
-            return ZG_EnumMessages(hHandle, pEnumProc, pUserData);
-        }
-        [Obsolete("use ZG_GetNextMessage")]
-        public static int ZG_EnumMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
-        {
-            return ZPIntf.ZP_EnumMessages(hHandle, pEnumProc, pUserData);
-        }
-        [Obsolete("use ZG_Cvt_SetNotification")]
-        public static int ZG_Cvt_FindNotification(IntPtr hHandle,
-            [In, Out] [MarshalAs(UnmanagedType.LPStruct)] ZG_CVT_NOTIFY_SETTINGS pSettings)
-        {
-            return ZG_Cvt_SetNotification(hHandle, pSettings);
-        }
-        [Obsolete("use ZG_Cvt_GetNextMessage")]
-        public static int ZG_Cvt_ProcessMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData = default(IntPtr))
-        {
-            return ZG_Cvt_EnumMessages(hHandle, pEnumProc, pUserData);
-        }
-        [Obsolete("use ZG_Cvt_GetNextMessage")]
-        public static int ZG_Cvt_EnumMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData = default(IntPtr))
-        {
-            int hr;
-            UInt32 nMsg = 0;
-            IntPtr nMsgParam = IntPtr.Zero;
-            while ((hr = ZG_Cvt_GetNextMessage(hHandle, ref nMsg, ref nMsgParam)) == S_OK)
-                pEnumProc(nMsg, nMsgParam, pUserData);
-            if (hr == ZPIntf.ZP_S_NOTFOUND)
-                hr = S_OK;
-            return hr;
-        }
-        [Obsolete("use ZG_Ctr_SetNotification")]
-        public static int ZG_Ctr_FindNotification(IntPtr hHandle,
-            [In, Out] [MarshalAs(UnmanagedType.LPStruct)] ZG_CTR_NOTIFY_SETTINGS pSettings)
-        {
-            return ZG_Ctr_SetNotification(hHandle, pSettings);
-        }
-        [Obsolete("use ZG_Ctr_GetNextMessage")]
-        public static int ZG_Ctr_ProcessMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
-        {
-            return ZG_Ctr_EnumMessages(hHandle, pEnumProc, pUserData);
-        }
-        [Obsolete("use ZG_Ctr_GetNextMessage")]
-        public static int ZG_Ctr_EnumMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
-        {
-            int hr;
-            UInt32 nMsg = 0;
-            IntPtr nMsgParam = IntPtr.Zero;
-            while ((hr = ZG_Ctr_GetNextMessage(hHandle, ref nMsg, ref nMsgParam)) == S_OK)
-                pEnumProc(nMsg, nMsgParam, pUserData);
-            if (hr == ZPIntf.ZP_S_NOTFOUND)
-                hr = S_OK;
-            return hr;
-        }
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_GetConfigData")]
+        /// <summary>
+        /// Возвращает данные конфигурации контроллера
+        /// </summary>
+        /// <param name="hHandle">Дескриптор контроллера</param>
+        /// <param name="pBuf">Буфер для данных</param>
+        /// <param name="nBufSize">Размер буфера</param>
+        /// <param name="pReaded">Количество прочитанных байт</param>
+        /// <returns></returns>
+        public static extern int ZG_Ctr_GetConfigData(IntPtr hHandle, [In, Out] byte[] pBuf, uint nBufSize, ref uint pReaded);
 
-        [Obsolete("use ZG_GetPortInfoList")]
-        public static int ZG_EnumSerialPorts(ZP_ENUMPORTSPROC pEnumProc, IntPtr pUserData)
-        {
-            int hr;
-            int nPortCount = 0;
-            IntPtr hList = new IntPtr();
-            hr = ZGIntf.ZG_GetPortInfoList(ref hList, ref nPortCount);
-            if (hr < 0)
-                return hr;
-            try
-            {
-                ZP_PORT_INFO rPI = new ZP_PORT_INFO();
-                for (int i = 0; i < nPortCount; i++)
-                {
-                    ZPIntf.ZP_GetPortInfo(hList, i, ref rPI);
-                    if (!pEnumProc(ref rPI, pUserData))
-                        return ZPIntf.ZP_S_CANCELLED;
-                }
-            }
-            finally
-            {
-                ZGIntf.ZG_CloseHandle(hList);
-            }
-            return hr;
-        }
-        [Obsolete("use ZG_SearchDevices")]
-        public static int ZP_EnumSerialDevices(UInt32 nTypeMask,
-            [In] [MarshalAs(UnmanagedType.LPArray)] ZP_PORT_ADDR[] pPorts, int nPCount, ZG_ENUMCVTSPROC pEnumProc, IntPtr pUserData,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null, UInt32 nFlags = (ZPIntf.ZP_SF_UPDATE|ZPIntf.ZP_SF_USEVCOM))
-        {
-            int hr;
-            ZP_SEARCH_PARAMS rParams = new ZP_SEARCH_PARAMS();
-            ZG_ENUM_CVT_INFO pDI = new ZG_ENUM_CVT_INFO();
-            ZP_PORT_INFO[] aPIs = new ZP_PORT_INFO[2];
-            ZG_ENUM_CVT_INFO pInfo;
-            IntPtr p = IntPtr.Zero;
-            int nPortCount;
-            IntPtr hSearch = IntPtr.Zero;
-            rParams.nDevMask = nTypeMask;
-            if ((nFlags & ZPIntf.ZP_SF_USEVCOM) != 0)
-                rParams.nFlags |= ZPIntf.ZP_SF_USECOM;
-            try
-            {
-                if (nPCount > 0)
-                {
-                    rParams.pPorts = Marshal.AllocHGlobal(Marshal.SizeOf(pPorts));
-                    Marshal.StructureToPtr(pPorts, rParams.pPorts, true);
-                }
-                if (pWS != null)
-                {
-                    rParams.pWait = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ZP_WAIT_SETTINGS)));
-                    Marshal.StructureToPtr(pWS, rParams.pWait, true);
-                }
-                hr = ZPIntf.ZP_SearchDevices(ref hSearch, ref rParams);
-                if (hr < 0)
-                    return hr;
-                pDI.rBase.cbSize = (UInt32)Marshal.SizeOf(pDI);
-                p = Marshal.AllocHGlobal(Marshal.SizeOf(pDI));
-                Marshal.StructureToPtr(pDI, p, true);
-                nPortCount = 0;
-                while ((hr = ZPIntf.ZP_FindNextDevice(hSearch, p, aPIs, aPIs.Length, ref nPortCount)) == S_OK)
-                {
-                    for (int i = 0; i < nPortCount; i++)
-                    {
-                        pInfo = (ZG_ENUM_CVT_INFO)Marshal.PtrToStructure(p, typeof(ZG_ENUM_CVT_INFO));
-                        if (!pEnumProc(ref pInfo, ref aPIs[i], pUserData))
-                            return ZPIntf.ZP_S_CANCELLED;
-                    }
-                    pDI.rBase.cbSize = (UInt32)Marshal.SizeOf(pDI);
-                    Marshal.StructureToPtr(pDI, p, true);
-                }
-            }
-            finally
-            {
-                if (p != IntPtr.Zero)
-                    Marshal.FreeHGlobal(p);
-                if (rParams.pWait != IntPtr.Zero)
-                    Marshal.FreeHGlobal(rParams.pWait);
-                if (rParams.pPorts != IntPtr.Zero)
-                    Marshal.FreeHGlobal(rParams.pPorts);
-                if (hSearch != IntPtr.Zero)
-                    ZG_CloseHandle(hSearch);
-            }
-            return hr;
-        }
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_Ctr_SetConfigData")]
+        /// <summary>
+        /// Устанавливает данные конфигурации контроллера
+        /// </summary>
+        /// <param name="hHandle">Дескриптор контроллера</param>
+        /// <param name="pData">Данные конфигурации контроллера</param>
+        /// <param name="nDataSize">Размер данных в байтах</param>
+        /// <returns></returns>
+        public static extern int ZG_Ctr_SetConfigData(IntPtr hHandle, [In, Out] byte[] pData, uint nDataSize);
 
-        [Obsolete("use ZG_SearchDevices")]
-        public static int ZG_EnumConverters([In] [MarshalAs(UnmanagedType.LPArray)] ZP_PORT_ADDR[] pPorts, int nPCount, ZG_ENUMCVTSPROC pEnumProc, IntPtr pUserData,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null, UInt32 nFlags = (ZPIntf.ZP_SF_UPDATE|ZPIntf.ZP_SF_USEVCOM))
-        {
-            return ZP_EnumSerialDevices(ZG_DEVTYPE_CVTS, pPorts, nPCount, pEnumProc, pUserData, pWS, nFlags);
-        }
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_GetCtrConfigParams")]
+        /// <summary>
+        /// Возвращает значения параметров из двоичных данных конфигурации контроллера
+        /// </summary>
+        /// <param name="pCfgData">Данные конфигурации контроллера</param>
+        /// <param name="nCfgDataSize">Размер данных в байтах</param>
+        /// <param name="pParams">Параметры конфигурации</param>
+        /// <returns></returns>
+        public static extern int ZG_GetCtrConfigParams([In, Out] byte[] pCfgData, uint nCfgDataSize, ref ZG_CTR_CONFIGURATION pParams);
 
-        [Obsolete("use ZG_SearchDevices")]
-        public static int ZP_EnumIpDevices(UInt32 nTypeMask,
-            ZG_ENUMIPCVTSPROC pEnumProc, IntPtr pUserData,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null, UInt32 nFlags = ZPIntf.ZP_SF_UPDATE)
-        {
-            int hr;
-            ZP_SEARCH_PARAMS rParams = new ZP_SEARCH_PARAMS();
-            ZG_ENUM_IPCVT_INFO pDI = new ZG_ENUM_IPCVT_INFO();
-            ZP_PORT_INFO[] aPIs = new ZP_PORT_INFO[2];
-            ZG_ENUM_IPCVT_INFO pInfo2;
-            IntPtr hSearch = IntPtr.Zero;
-            IntPtr p = IntPtr.Zero;
-            int nPortCount;
-            rParams.nIpDevMask = nTypeMask;
-            try
-            {
-                if (pWS != null)
-                {
-                    rParams.pWait = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ZP_WAIT_SETTINGS)));
-                    Marshal.StructureToPtr(pWS, rParams.pWait, true);
-                }
-                hr = ZPIntf.ZP_SearchDevices(ref hSearch, ref rParams);
-                if (hr < 0)
-                    return hr;
-                pDI.rBase.cbSize = (UInt32)Marshal.SizeOf(typeof(ZG_ENUM_IPCVT_INFO));
-                p = Marshal.AllocHGlobal(Marshal.SizeOf(pDI));
-                Marshal.StructureToPtr(pDI, p, true);
-                nPortCount = 0;
-                while ((hr = ZPIntf.ZP_FindNextDevice(hSearch, p, aPIs, aPIs.Length, ref nPortCount)) == S_OK)
-                {
-                    for (int i = 0; i < nPortCount; i++)
-                    {
-                        pInfo2 = (ZG_ENUM_IPCVT_INFO)Marshal.PtrToStructure(p, typeof(ZG_ENUM_IPCVT_INFO));
-                        if (!pEnumProc(ref pInfo2, ref aPIs[i], pUserData))
-                            return ZPIntf.ZP_S_CANCELLED;
-                    }
-                    pDI.rBase.cbSize = (UInt32)Marshal.SizeOf(typeof(ZG_ENUM_IPCVT_INFO));
-                    Marshal.StructureToPtr(pDI, p, true);
-                }
-            }
-            finally
-            {
-                if (p != IntPtr.Zero)
-                    Marshal.FreeHGlobal(p);
-                if (rParams.pWait != IntPtr.Zero)
-                    Marshal.FreeHGlobal(rParams.pWait);
-                if (hSearch != IntPtr.Zero)
-                    ZG_CloseHandle(hSearch);
-            }
-            return hr;
-        }
-
-        [Obsolete("use ZG_SearchDevices")]
-        public static int ZG_EnumIpConverters(ZG_ENUMIPCVTSPROC pEnumProc, IntPtr pUserData,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null, UInt32 nFlags = ZPIntf.ZP_SF_UPDATE)
-        {
-            return ZP_EnumIpDevices(1, pEnumProc, pUserData, pWS, nFlags);
-        }
+        [DllImport(ZgDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZG_SetCtrConfigParams")]
+        /// <summary>
+        /// Устанавливает значения параметров в двоичных данных конфигурации контроллера
+        /// </summary>
+        /// <param name="pCfgData">Данные конфигурации контроллера</param>
+        /// <param name="nCfgDataSize">Размер данных в байтах</param>
+        /// <param name="pParams">Параметры конфигурации</param>
+        /// <returns></returns>
+        public static extern int ZG_SetCtrConfigParams([In, Out] byte[] pCfgData, uint nCfgDataSize, ref ZG_CTR_CONFIGURATION pParams);
 
 
-        [Obsolete("use ZG_SearchDevices")]
-        public static int ZG_FindConverter([In] [MarshalAs(UnmanagedType.LPArray)] ZP_PORT_ADDR[] pPorts, int nPCount,
-            [MarshalAs(UnmanagedType.LPStruct)] ref ZG_ENUM_CVT_INFO pInfo, ref ZP_PORT_INFO pPort,
-            [In] [MarshalAs(UnmanagedType.LPStruct)] ZP_WAIT_SETTINGS pWS = null, UInt32 nFlags = (ZPIntf.ZP_SF_UPDATE|ZPIntf.ZP_SF_USEVCOM))
-        {
-            int hr;
-            ZP_SEARCH_PARAMS rParams = new ZP_SEARCH_PARAMS();
-            ZG_ENUM_CVT_INFO pDI = new ZG_ENUM_CVT_INFO();
-            ZP_PORT_INFO[] aPIs = new ZP_PORT_INFO[2];
-            IntPtr p = IntPtr.Zero;
-            int nPortCount;
-            IntPtr hSearch = IntPtr.Zero;
-            rParams.nDevMask = ZG_DEVTYPE_CVTS;
-            if ((nFlags & ZPIntf.ZP_SF_USEVCOM) != 0)
-                rParams.nFlags |= ZPIntf.ZP_SF_USECOM;
-            try
-            {
-                if (nPCount > 0)
-                {
-                    rParams.pPorts = Marshal.AllocHGlobal(Marshal.SizeOf(pPorts));
-                    Marshal.StructureToPtr(pPorts, rParams.pPorts, true);
-                }
-                if (pWS != null)
-                {
-                    rParams.pWait = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ZP_WAIT_SETTINGS)));
-                    Marshal.StructureToPtr(pWS, rParams.pWait, true);
-                }
-                hr = ZPIntf.ZP_SearchDevices(ref hSearch, ref rParams);
-                if (hr < 0)
-                    return hr;
-                pDI.rBase.cbSize = (UInt32)Marshal.SizeOf(pDI);
-                p = Marshal.AllocHGlobal(Marshal.SizeOf(pDI));
-                Marshal.StructureToPtr(pDI, p, true);
-                nPortCount = 0;
-                hr = ZPIntf.ZP_FindNextDevice(hSearch, p, aPIs, aPIs.Length, ref nPortCount);
-                if (hr == S_OK)
-                {
-                    pInfo = (ZG_ENUM_CVT_INFO)Marshal.PtrToStructure(p, typeof(ZG_ENUM_CVT_INFO));
-                    pPort = aPIs[0];
-                }
-            }
-            finally
-            {
-                if (p != IntPtr.Zero)
-                    Marshal.FreeHGlobal(p);
-                if (rParams.pWait != IntPtr.Zero)
-                    Marshal.FreeHGlobal(rParams.pWait);
-                if (rParams.pPorts != IntPtr.Zero)
-                    Marshal.FreeHGlobal(rParams.pPorts);
-                if (hSearch != IntPtr.Zero)
-                    ZG_CloseHandle(hSearch);
-            }
-            return hr;
-        }
 
         // Utils
 

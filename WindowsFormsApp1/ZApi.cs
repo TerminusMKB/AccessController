@@ -13,7 +13,7 @@ namespace Z
         private static readonly log4net.ILog log = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         private ZP_PORT_TYPE PortType = ZP_PORT_TYPE.ZP_PORT_IP;
-        private String Address = "192.168.101.12:7000";
+        private String Address = "192.168.100.224:1000";
         public IntPtr ConverterHandler = IntPtr.Zero;
         private List<ControllerInfoShort> tmpControllerInfoShortList;
 
@@ -32,22 +32,28 @@ namespace Z
                                                       };
 
         public void init() {
+            log.Info("init 1");
             if (!ConverterHandler.Equals(IntPtr.Zero)) {
                 return;
             }
+
+            log.Info("init 2");
             int hr = ZGIntf.ZG_Initialize(ZPIntf.ZP_IF_NO_MSG_LOOP);
             if (hr < 0)
             {
                 log.Fatal("Ошибка ZG_Initialize: " + hr);
                 throw new ZCommonException("Ошибка ZG_Initialize").setErrorCode(hr);
             }
+            log.Info("init 3");
             ZG_CVT_INFO ConverterInfo = new ZG_CVT_INFO();
             ZG_CVT_OPEN_PARAMS OpenParams = new ZG_CVT_OPEN_PARAMS();
             OpenParams.nPortType = PortType;
             OpenParams.pszName = @Address;
             OpenParams.nSpeed = ZG_CVT_SPEED.ZG_SPEED_57600;
 
+            log.Info("init 4");
             hr = ZGIntf.ZG_Cvt_Open(ref ConverterHandler, ref OpenParams, ConverterInfo);
+            log.Info("init 5");
             if (hr < 0)
             {
                 log.Fatal("Ошибка ZG_Cvt_Open: " + hr);
@@ -58,6 +64,7 @@ namespace Z
             if (ConverterHandler == IntPtr.Zero) {
                 return;
             }
+            log.Info("Действительно закрываем");
             int hr = ZGIntf.ZG_CloseHandle(ConverterHandler);
             if (hr < 0)
             {
@@ -92,6 +99,7 @@ namespace Z
             newControllerInfoShort.name = CtrTypeStrs[(int)pInfo.nType];
             newControllerInfoShort.address = pInfo.nAddr;
             newControllerInfoShort.serialNumber = pInfo.nSn;
+            newControllerInfoShort.maxKeys = pInfo.nMaxKeys;
             newControllerInfoShort.maxEvents = pInfo.nMaxEvents;
             tmpControllerInfoShortList.Add(newControllerInfoShort);
             return true;
@@ -165,6 +173,8 @@ namespace Z
             try
             {
                 //Открываем контроллер
+                Console.WriteLine("Открываем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //log.Info("Открываем");
                 int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
                 if (hr < 0)
                 {
@@ -190,7 +200,9 @@ namespace Z
                 else {
                     _keyIndex = keyIndex;
                 }
-                hr = ZGIntf.ZG_Ctr_WriteKeys(ControllerHandler, _keyIndex, aKeys, 1, null, default(IntPtr), 0, true);
+                Console.WriteLine("Пишем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //log.Info("Пишем");
+                hr = ZGIntf.ZG_Ctr_WriteKeys(ControllerHandler, _keyIndex, aKeys, 1, null, default(IntPtr), 0);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_WriteKeys (" + hr + ")");
@@ -199,11 +211,15 @@ namespace Z
             }
             finally
             {
+                Console.WriteLine("Закрываем: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //log.Info("Закрываем");
                 //Автоматически закрываем контроллер
                 if (ControllerHandler != IntPtr.Zero)
                 {
                     ZGIntf.ZG_CloseHandle(ControllerHandler);
                 }
+                Console.WriteLine("Закончили: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
+                //log.Info("Закончили");
             }
         }
 
@@ -220,7 +236,38 @@ namespace Z
                     throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
                 }
                 //Удаляем ключ
-                hr = ZGIntf.ZG_Ctr_ClearKeys(ControllerHandler, keyIndex, 1, null, default(IntPtr), 0, true);
+                hr = ZGIntf.ZG_Ctr_ClearKeys(ControllerHandler, keyIndex, 1, null, default(IntPtr), 0);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_ClearKeys (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_ClearKeys").setErrorCode(hr);
+                }
+            }
+            finally
+            {
+                //Автоматически закрываем контроллер
+                if (ControllerHandler != IntPtr.Zero)
+                {
+                    ZGIntf.ZG_CloseHandle(ControllerHandler);
+                }
+            }
+        }
+
+        public void clearAllKeys(ushort serialNumber)
+        {
+            IntPtr ControllerHandler = new IntPtr(0);
+            ZG_CTR_INFO ControllerInfo = new ZG_CTR_INFO();
+            try
+            {
+                //Открываем контроллер
+                int hr = ZGIntf.ZG_Ctr_Open(ref ControllerHandler, ConverterHandler, 255, serialNumber, ref ControllerInfo);
+                if (hr < 0)
+                {
+                    log.Fatal("Ошибка ZG_Ctr_Open (" + hr + ")");
+                    throw new ZCommonException("Ошибка ZG_Ctr_Open").setErrorCode(hr);
+                }
+                //Удаляем ключ
+                hr = ZGIntf.ZG_Ctr_ClearKeys(ControllerHandler, 0, ControllerInfo.nMaxKeys, null, default(IntPtr), 0);
                 if (hr < 0)
                 {
                     log.Fatal("Ошибка ZG_Ctr_ClearKeys (" + hr + ")");
@@ -256,6 +303,8 @@ namespace Z
                 int writeIndex = 0;
                 int _readIndex = 0;
                 hr = ZGIntf.ZG_Ctr_ReadEventIdxs(ControllerHandler, ref writeIndex, ref _readIndex);
+                log.Info("returned writeIndex: " + writeIndex);
+                log.Info("returned _readIndex: " + _readIndex);
                 //log.Info("WriteIndex: " + writeIndex);
                 if (lastReadIndex == -1)
                 {
@@ -264,6 +313,7 @@ namespace Z
                     if (writeIndex > 0)
                     {
                         FetchEventsResult fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
+                        //log.Info(">>> " + fetchEventsResult.items.Count);
                         if (fetchEventsResult.items.Count > 0)
                         {
                             result.items = fetchEventsResult.items;
@@ -338,19 +388,30 @@ namespace Z
                         if (writeIndex > lastReadIndex)
                         {
                             //Читаем небольшой хвост от текущего индекса до следующего индекса записи
-                            fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, writeIndex - lastReadIndex - 1);
-                            if (fetchEventsResult.items.Count > 0)
+                            if (writeIndex - lastReadIndex - 1 > 0)
                             {
-                                result.items = fetchEventsResult.items;
-                                result.lastReadIndex = fetchEventsResult.lastReadIndex;
-                                result.lastReadMonth = fetchEventsResult.lastReadMonth;
-                                result.lastReadDay = fetchEventsResult.lastReadDay;
-                                result.lastReadHour = fetchEventsResult.lastReadHour;
-                                result.lastReadMinute = fetchEventsResult.lastReadMinute;
-                                result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                                fetchEventsResult = fetchEventsBlock(ControllerHandler, lastReadIndex + 1, writeIndex - lastReadIndex - 1);
+                                if (fetchEventsResult.items.Count > 0)
+                                {
+                                    result.items = fetchEventsResult.items;
+                                    result.lastReadIndex = fetchEventsResult.lastReadIndex;
+                                    result.lastReadMonth = fetchEventsResult.lastReadMonth;
+                                    result.lastReadDay = fetchEventsResult.lastReadDay;
+                                    result.lastReadHour = fetchEventsResult.lastReadHour;
+                                    result.lastReadMinute = fetchEventsResult.lastReadMinute;
+                                    result.lastReadSecond = fetchEventsResult.lastReadSecond;
+                                }
+                                else
+                                {
+                                    result.lastReadIndex = lastReadIndex;
+                                    result.lastReadMonth = lastReadMonth;
+                                    result.lastReadDay = lastReadDay;
+                                    result.lastReadHour = lastReadHour;
+                                    result.lastReadMinute = lastReadMinute;
+                                    result.lastReadSecond = lastReadSecond;
+                                }
                             }
-                            else
-                            {
+                            else {
                                 result.lastReadIndex = lastReadIndex;
                                 result.lastReadMonth = lastReadMonth;
                                 result.lastReadDay = lastReadDay;
@@ -378,7 +439,7 @@ namespace Z
                                 }
                             }
                             //Читаем от начала списка до индекса записи
-                            if (writeIndex > 0)
+                            if (writeIndex >= 0)
                             {
                                 fetchEventsResult = fetchEventsBlock(ControllerHandler, 0, writeIndex);
                                 if (fetchEventsResult.items.Count > 0)
@@ -517,7 +578,8 @@ namespace Z
     public class ControllerInfoShort {
         public String name;
         public int address;
-        public UInt16 serialNumber;
+        public int serialNumber;
+        public int maxKeys;
         public int maxEvents;
     }
 

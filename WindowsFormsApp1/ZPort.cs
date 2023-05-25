@@ -5,14 +5,14 @@ using System.Text;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-using ZP_OPEN_PARAMS = ZPort.ZP_PORT_OPEN_PARAMS;
-using ZP_N_EXIST_INFO = ZPort.ZP_DDN_PORT_INFO;
-using ZP_N_CHANGE_INFO = ZPort.ZP_DDN_PORT_INFO;
-using ZP_N_EXIST_DEVINFO = ZPort.ZP_DDN_DEVICE_INFO;
-using ZP_N_CHANGE_DEVINFO = ZPort.ZP_DDN_DEVICE_INFO;
-using ZP_NOTIFY_SETTINGS = ZPort.ZP_DD_NOTIFY_SETTINGS;
-using ZP_S_DEVICE = ZPort.ZP_USB_DEVICE;
-using ZP_DETECTOR_SETTINGS = ZPort.ZP_DD_GLOBAL_SETTINGS;
+//using ZP_OPEN_PARAMS = ZPort.ZP_PORT_OPEN_PARAMS;
+//using ZP_N_EXIST_INFO = ZPort.ZP_DDN_PORT_INFO;
+//using ZP_N_CHANGE_INFO = ZPort.ZP_DDN_PORT_INFO;
+//using ZP_N_EXIST_DEVINFO = ZPort.ZP_DDN_DEVICE_INFO;
+//using ZP_N_CHANGE_DEVINFO = ZPort.ZP_DDN_DEVICE_INFO;
+//using ZP_NOTIFY_SETTINGS = ZPort.ZP_DD_NOTIFY_SETTINGS;
+//using ZP_S_DEVICE = ZPort.ZP_USB_DEVICE;
+//using ZP_DETECTOR_SETTINGS = ZPort.ZP_DD_GLOBAL_SETTINGS;
 
 namespace ZPort
 {
@@ -40,14 +40,14 @@ namespace ZPort
         [In, Out] ZP_PORT_INFO[] pPort, Int32 nArrLen, ref Int32 nPortCount);
     #endregion
 
-    #region Устаревшие типы
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate bool ZP_ENUMPORTSPROC(ref ZP_PORT_INFO pInfo, IntPtr pUserData);
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate bool ZP_ENUMDEVICEPROC(IntPtr pInfo, ref ZP_PORT_INFO pPort, IntPtr pUserData);
-    [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    public delegate bool ZP_NOTIFYPROC(UInt32 nMsg, IntPtr nMsgParam, IntPtr pUserData);
-    #endregion
+    //#region Устаревшие типы
+    //[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    //public delegate bool ZP_ENUMPORTSPROC(ref ZP_PORT_INFO pInfo, IntPtr pUserData);
+    //[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    //public delegate bool ZP_ENUMDEVICEPROC(IntPtr pInfo, ref ZP_PORT_INFO pPort, IntPtr pUserData);
+    //[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+    //public delegate bool ZP_NOTIFYPROC(UInt32 nMsg, IntPtr nMsgParam, IntPtr pUserData);
+    //#endregion
 
     #region структуры
 
@@ -241,7 +241,7 @@ namespace ZPort
     {
         #region Версия ZPort API
         public const int ZP_SDK_VER_MAJOR = 1;
-        public const int ZP_SDK_VER_MINOR = 18;
+        public const int ZP_SDK_VER_MINOR = 20;
         #endregion
 
         #region Коды ошибок
@@ -250,6 +250,7 @@ namespace ZPort
         public const int E_OUTOFMEMORY = unchecked((int)0x80000002);          // Недостаточно памяти для обработки команды
         public const int E_INVALIDARG = unchecked((int)0x80000003);           // Неправильный параметр
         public const int E_NOINTERFACE = unchecked((int)0x80000004);          // Функция не поддерживается
+        public const int E_HANDLE = unchecked((int)0x80000006);               // Неправильный дескриптор (Handle)
         public const int E_ABORT = unchecked((int)0x80000007);                // Функция прервана (см.описание ZP_WAIT_SETTINGS)
         public const int E_ACCESSDENIED = unchecked((int)0x80000009);         // Ошибка доступа
 
@@ -304,11 +305,10 @@ namespace ZPort
 
         #region Константы 
         public const uint ZP_MAX_PORT_NAME = 31;
-        public const uint ZP_MAX_REG_DEV = 32;
+        public const uint ZP_MAX_REG_DEV = 16;
         #endregion
 
-        #region Константы ZP_Initialize
-        // ZP_Initialize Flags
+        #region Флаги для функции ZP_Initialize
         public const uint ZP_IF_NO_MSG_LOOP = 0x01;     // Приложение не имеет цикла обработки сообщений (Console or Service)
         public const uint ZP_IF_LOG = 0x02;             // Писать лог
         #endregion
@@ -329,16 +329,16 @@ namespace ZPort
         public const int ZP_FINDIP_MAXTRIES = 1;            // Максимум попыток поиска ip-устройств по UDP
         #endregion
 
-        #region Константы (Флаги для ZP_DD_SetNotification и ZP_DD_NOTIFY_SETTINGS.nNMask)
-        public const uint ZP_NF_EXIST = 0x01;           // Уведомления о подключении/отключении порта (ZP_N_INSERT / ZP_N_REMOVE)
-        public const uint ZP_NF_CHANGE = 0x02;          // Уведомление о изменении параметров порта (ZP_N_CHANGE)
-        public const uint ZP_NF_ERROR = 0x08;           // Уведомление об ошибке в ните(thread), сканирующей порты (ZP_N_ERROR)
-        public const uint ZP_NF_SDEVICE = 0x10;         // Информация о устройствах, подключенным к последовательным портам
-        public const uint ZP_NF_IPDEVICE = 0x20;        // Информация о устройствах, подключенным к IP-портам
-        public const uint ZP_NF_IPSDEVICE = 0x80;       // Опрашивать устройства через IPS-порты
-        public const uint ZP_NF_COMPLETED = 0x40;       // Уведомления о завершении сканирования
-        public const uint ZP_NF_DEVEXIST = 0x04;        // Уведомления о подключении/отключении устройства (ZP_N_DEVINSERT / ZP_N_DEVREMOVE)
-        public const uint ZP_NF_DEVCHANGE = 0x100;      // Уведомления о изменении параметров устройства (ZP_N_DEVCHANGE)
+        #region Флаги для функции ZP_DD_SetNotification (ZP_DD_NOTIFY_SETTINGS.nNMask)
+        public const uint ZP_NF_EXIST = 0x0001;         // Уведомления о подключении/отключении порта (ZP_N_INSERT / ZP_N_REMOVE)
+        public const uint ZP_NF_CHANGE = 0x0002;        // Уведомление о изменении параметров порта (ZP_N_CHANGE)
+        public const uint ZP_NF_ERROR = 0x0008;         // Уведомление об ошибке в ните(thread), сканирующей порты (ZP_N_ERROR)
+        public const uint ZP_NF_SDEVICE = 0x0010;       // Информация о устройствах, подключенным к последовательным портам
+        public const uint ZP_NF_IPDEVICE = 0x0020;      // Информация о устройствах, подключенным к IP-портам
+        public const uint ZP_NF_IPSDEVICE = 0x0080;     // Опрашивать устройства через IPS-порты
+        public const uint ZP_NF_COMPLETED = 0x0040;     // Уведомления о завершении сканирования
+        public const uint ZP_NF_DEVEXIST = 0x0004;      // Уведомления о подключении/отключении устройства (ZP_N_DEVINSERT / ZP_N_DEVREMOVE)
+        public const uint ZP_NF_DEVCHANGE = 0x0100;     // Уведомления о изменении параметров устройства (ZP_N_DEVCHANGE)
         public const uint ZP_NF_UNIDCOM = 0x1000;       // Искать неопознанные com-порты
         public const uint ZP_NF_USECOM = 0x2000;        // По возможности использовать Com-порт
 
@@ -351,39 +351,39 @@ namespace ZPort
         public const uint ZP_N_DEVREMOVE = 7;           // Отключение устройства (PZP_N_EXIST_DEVINFO(MsgParam) - инфо о устройстве)
         public const uint ZP_N_DEVCHANGE = 8;           // Изменение параметров устройства (PZP_N_CHANGE_DEVINFO(MsgParam) - инфо об изменениях)
 
-        // Флаги для ZP_N_CHANGE_INFO.nChangeMask и ZP_N_CHANGE_DEVINFO.nChangeMask
-        public const uint ZP_CIF_BUSY = 4;              // Изменилось состояние "порт занят"
-        public const uint ZP_CIF_FRIENDLY = 8;          // Изменилось дружественное имя порта
-        public const uint ZP_CIF_OWNER = 0x20;          // Изменился владелец порта (только для IP устройств)
-        public const uint ZP_CIF_MODEL = 0x80;          // Изменилась модель устройства
-        public const uint ZP_CIF_SN = 0x100;            // Изменился серийный номер устройства
-        public const uint ZP_CIF_VERSION = 0x200;       // Изменилась версия прошивки устройства
-        public const uint ZP_CIF_DEVPARAMS = 0x400;     // Изменились расширенные параметры устройства
-        public const uint ZP_CIF_LIST = 0x800;          // Изменился список портов (для ZP_DDN_DEVICE_INFO) или устройств (для ZP_DDN_PORT_INFO)
+        // Флаги для ZP_DDN_PORT_INFO.nChangeMask и ZP_DDN_DEVICE_INFO.nChangeMask
+        public const uint ZP_CIF_BUSY = 0x0004;         // Изменилось состояние "порт занят"
+        public const uint ZP_CIF_FRIENDLY = 0x0008;     // Изменилось дружественное имя порта
+        public const uint ZP_CIF_OWNER = 0x0020;        // Изменился владелец порта (только для IP устройств)
+        public const uint ZP_CIF_MODEL = 0x0080;        // Изменилась модель устройства
+        public const uint ZP_CIF_SN = 0x0100;           // Изменился серийный номер устройства
+        public const uint ZP_CIF_VERSION = 0x0200;      // Изменилась версия прошивки устройства
+        public const uint ZP_CIF_DEVPARAMS = 0x0400;    // Изменились расширенные параметры устройства
+        public const uint ZP_CIF_LIST = 0x0800;         // Изменился список портов (для ZP_DDN_DEVICE_INFO) или устройств (для ZP_DDN_PORT_INFO)
         #endregion
 
-        #region Константы (Флаги для ZP_PORT_INFO.nFlags)
-        public const uint ZP_PIF_BUSY = 1;   // Порт занят
-        public const uint ZP_PIF_USER = 2;   // Порт, указанный пользователем (массив ZP_PORT_ADDR)
+        #region Флаги для ZP_PORT_INFO.nFlags
+        public const uint ZP_PIF_BUSY = 0x0001;   // Порт занят
+        public const uint ZP_PIF_USER = 0x0002;   // Порт, указанный пользователем (массив ZP_PORT_ADDR)
         #endregion
 
-        #region Константы (Флаги для ZP_Port_Open и ZP_PORT_OPEN_PARAMS.nFlags)
-        public const uint ZP_POF_NO_WAIT_CONNECT = 1;   // Не ждать завершения процедуры подключения
-        public const uint ZP_POF_NO_CONNECT_ERR = 2;    // Не возвращать ошибку в случае когда связь прервалась
-        public const uint ZP_POF_NO_DETECT_USB = 4;     // Не использовать детектор USB-устройств (для ZP_PORT_FT и ZP_PORT_COM)
+        #region Флаги для функции ZP_Port_Open (ZP_PORT_OPEN_PARAMS.nFlags)
+        public const uint ZP_POF_NO_WAIT_CONNECT = 0x0001;  // Не ждать завершения процедуры подключения
+        public const uint ZP_POF_NO_CONNECT_ERR = 0x0002;   // Не возвращать ошибку в случае когда связь прервалась
+        public const uint ZP_POF_NO_DETECT_USB = 0x0004;    // Не использовать детектор USB-устройств (для ZP_PORT_FT и ZP_PORT_COM)
         #endregion
 
-        #region Константы (Флаги для ZP_SearchDevices и ZP_SEARCH_PARAMS.nFlags)
-        public const uint ZP_SF_USECOM = 1;             // Использовать COM-порт по возможности
-        public const uint ZP_SF_DETECTOR = 2;           // Использовать уже готовый список найденных устройств Детектора (создается функцией ZP_FindNotification)
-        public const uint ZP_SF_IPS = 4;                // Включить в список найденные IP-конвертеры в режиме CLIENT
-        public const uint ZP_SF_UNID = 8;               // Включить в список неопознанные устройства
-        public const uint ZP_SF_UNIDCOM = 0x10;         // Опрашивать неопознанные com-порты
+        #region Флаги для функции ZP_SearchDevices (ZP_SEARCH_PARAMS.nFlags)
+        public const uint ZP_SF_USECOM = 0x0001;        // Использовать COM-порт по возможности
+        public const uint ZP_SF_DETECTOR = 0x0002;      // Использовать уже готовый список найденных устройств Детектора (создается функцией ZP_FindNotification)
+        public const uint ZP_SF_IPS = 0x0004;           // Включить в список найденные IP-конвертеры в режиме CLIENT
+        public const uint ZP_SF_UNID = 0x0008;          // Включить в список неопознанные устройства
+        public const uint ZP_SF_UNIDCOM = 0x0010;         // Опрашивать неопознанные com-порты
         #endregion
 
-        #region Константы (Флаги для ZP_Port_SetNotification и ZP_Port_EnumMessages)
-        public const uint ZP_PNF_RXEVENT = 1;           // Пришли новые данные от устройства
-        public const uint ZP_PNF_STATUS = 2;            // Изменилось состояние подключения порта
+        #region Флаги для функции ZP_Port_SetNotification и ZP_Port_EnumMessages
+        public const uint ZP_PNF_RXEVENT = 0x0001;      // Пришли новые данные от устройства
+        public const uint ZP_PNF_STATUS = 0x0002;       // Изменилось состояние подключения порта
         #endregion
 
         #region Устаревшие константы
@@ -472,7 +472,7 @@ namespace ZPort
         public static extern int ZP_Port_GetBaudAndEvChar(IntPtr pHandle, ref UInt32 nBaud, ref char nEvChar);
 
         [DllImport(ZpDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZP_Port_GetConnectionStatus")]
-        public static extern int ZP_Port_GetConnectionStatus(IntPtr pHandle, ref ZP_CONNECTION_STATUS nValue);
+        public static extern int ZP_Port_GetConnectionStatus(IntPtr pHandle, ref ZP_CONNECTION_STATUS nValue, ref UInt32 nSessionId);
 
         [DllImport(ZpDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZP_Port_SetNotification")]
         public static extern int ZP_Port_SetNotification(IntPtr pHandle, IntPtr hEvent, IntPtr hWnd, UInt32 nMsgId, UInt32 nMsgMask);
@@ -490,7 +490,7 @@ namespace ZPort
         public static extern int ZP_Port_SetRts(IntPtr hHandle, bool fState);
 
         [DllImport(ZpDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZP_RegSerialDevice")]
-        public static extern int ZP_RegSerialDevice(ref ZP_S_DEVICE pParams);
+        public static extern int ZP_RegSerialDevice(ref ZP_USB_DEVICE pParams);
 
         [DllImport(ZpDllName, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZP_RegIpDevice")]
         public static extern int ZP_RegIpDevice(ref ZP_IP_DEVICE pParams);
@@ -529,84 +529,84 @@ namespace ZPort
 #endif
 
         [DllImport(ZpDllName, CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall, EntryPoint = "ZP_AddLog")]
-        public static extern int ZP_AddLog(char chSrc, int nMsgType; string sText);
+        public static extern int ZP_AddLog(char chSrc, int nMsgType, string sText);
 #endif // ZP_LOG
 
-        [Obsolete("use ZP_GetPortInfoList")]
-        public static int ZP_EnumSerialPorts(UInt32 nDevTypes, ZP_ENUMPORTSPROC pEnumProc, IntPtr pUserData)
-        {
-            IntPtr hList = IntPtr.Zero;
-            int nPortCount = 0;
-            int hr = ZP_GetPortInfoList(ref hList, ref nPortCount, nDevTypes);
-            if (hr < 0)
-                return hr;
-            try
-            {
-                ZP_PORT_INFO rPI = new ZP_PORT_INFO();
-                for (int i = 0; i < nPortCount; i++)
-                {
-                    hr = ZP_GetPortInfo(hList, i, ref rPI);
-                    if (hr < 0)
-                        break;
-                    if (!pEnumProc(ref rPI, pUserData))
-                        return ZP_S_CANCELLED;
-                }
-            }
-            finally
-            {
-                ZP_CloseHandle(hList);
-            }
-            return hr;
-        }
-        [Obsolete("use ZP_GetNextMessage")]
-        public static int ZP_EnumMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
-        {
-            int hr;
-            UInt32 nMsg = 0;
-            IntPtr nMsgParam = IntPtr.Zero;
-            while ((hr = ZP_GetNextMessage(hHandle, ref nMsg, ref nMsgParam)) == S_OK)
-                pEnumProc(nMsg, nMsgParam, pUserData);
-            if (hr == ZP_S_NOTFOUND)
-                hr = S_OK;
-            return hr;
-        }
+        //[Obsolete("use ZP_GetPortInfoList")]
+        //public static int ZP_EnumSerialPorts(UInt32 nDevTypes, ZP_ENUMPORTSPROC pEnumProc, IntPtr pUserData)
+        //{
+        //    IntPtr hList = IntPtr.Zero;
+        //    int nPortCount = 0;
+        //    int hr = ZP_GetPortInfoList(ref hList, ref nPortCount, nDevTypes);
+        //    if (hr < 0)
+        //        return hr;
+        //    try
+        //    {
+        //        ZP_PORT_INFO rPI = new ZP_PORT_INFO();
+        //        for (int i = 0; i < nPortCount; i++)
+        //        {
+        //            hr = ZP_GetPortInfo(hList, i, ref rPI);
+        //            if (hr < 0)
+        //                break;
+        //            if (!pEnumProc(ref rPI, pUserData))
+        //                return ZP_S_CANCELLED;
+        //        }
+        //    }
+        //    finally
+        //    {
+        //        ZP_CloseHandle(hList);
+        //    }
+        //    return hr;
+        //}
+        //[Obsolete("use ZP_GetNextMessage")]
+        //public static int ZP_EnumMessages(IntPtr hHandle, ZP_NOTIFYPROC pEnumProc, IntPtr pUserData)
+        //{
+        //    int hr;
+        //    UInt32 nMsg = 0;
+        //    IntPtr nMsgParam = IntPtr.Zero;
+        //    while ((hr = ZP_GetNextMessage(hHandle, ref nMsg, ref nMsgParam)) == S_OK)
+        //        pEnumProc(nMsg, nMsgParam, pUserData);
+        //    if (hr == ZP_S_NOTFOUND)
+        //        hr = S_OK;
+        //    return hr;
+        //}
 
-        [Obsolete("use ZP_CloseHandle")]
-        public static int ZP_CloseNotification(IntPtr hHandle)
-        {
-            return ZP_CloseHandle(hHandle);
-        }
+        //[Obsolete("use ZP_CloseHandle")]
+        //public static int ZP_CloseNotification(IntPtr hHandle)
+        //{
+        //    return ZP_CloseHandle(hHandle);
+        //}
 
-        [Obsolete("use ZP_CloseHandle")]
-        public static int ZP_Close(IntPtr hHandle)
-        {
-            return ZP_CloseHandle(hHandle);
-        }
+        //[Obsolete("use ZP_CloseHandle")]
+        //public static int ZP_Close(IntPtr hHandle)
+        //{
+        //    return ZP_CloseHandle(hHandle);
+        //}
 
-        [Obsolete("use ZP_DD_SetNotification")]
-        public static int ZP_SetNotification(ref IntPtr pHandle, ref ZP_DD_NOTIFY_SETTINGS pSettings)
-        {
-            return ZP_DD_SetNotification(ref pHandle, ref pSettings);
-        }
-        [Obsolete("use ZP_DD_GetNextMessage")]
-        public static int ZP_GetNextMessage(IntPtr hHandle, ref UInt32 nMsg, ref IntPtr nMsgParam)
-        {
-            return ZP_DD_GetNextMessage(hHandle, ref nMsg, ref nMsgParam);
-        }
-        [Obsolete("use ZP_DD_SetGlobalSettings")]
-        public static int ZP_SetDetectorSettings(ref ZP_DD_GLOBAL_SETTINGS pSettings)
-        {
-            return ZP_DD_SetGlobalSettings(ref pSettings);
-        }
-        [Obsolete("use ZP_DD_GetGlobalSettings")]
-        public static int ZP_GetDetectorSettings(ref ZP_DD_GLOBAL_SETTINGS pSettings)
-        {
-            return ZP_DD_GetGlobalSettings(ref pSettings);
-        }
-        [Obsolete("use ZP_DD_Refresh")]
-        public static int ZP_UpdateDetector(UInt32 nWaitMs=0)
-        {
-            return ZP_DD_Refresh(nWaitMs);
-        }
+        //[Obsolete("use ZP_DD_SetNotification")]
+        //public static int ZP_SetNotification(ref IntPtr pHandle, ref ZP_DD_NOTIFY_SETTINGS pSettings)
+        //{
+        //    return ZP_DD_SetNotification(ref pHandle, ref pSettings);
+        //}
+        //[Obsolete("use ZP_DD_GetNextMessage")]
+        //public static int ZP_GetNextMessage(IntPtr hHandle, ref UInt32 nMsg, ref IntPtr nMsgParam)
+        //{
+        //    return ZP_DD_GetNextMessage(hHandle, ref nMsg, ref nMsgParam);
+        //}
+        //[Obsolete("use ZP_DD_SetGlobalSettings")]
+        //public static int ZP_SetDetectorSettings(ref ZP_DD_GLOBAL_SETTINGS pSettings)
+        //{
+        //    return ZP_DD_SetGlobalSettings(ref pSettings);
+        //}
+        //[Obsolete("use ZP_DD_GetGlobalSettings")]
+        //public static int ZP_GetDetectorSettings(ref ZP_DD_GLOBAL_SETTINGS pSettings)
+        //{
+        //    return ZP_DD_GetGlobalSettings(ref pSettings);
+        //}
+        //[Obsolete("use ZP_DD_Refresh")]
+        //public static int ZP_UpdateDetector(UInt32 nWaitMs=0)
+        //{
+        //    return ZP_DD_Refresh(nWaitMs);
+        //}
     }
 }
