@@ -39,6 +39,9 @@ namespace WindowsFormsApp1
         public static object lastRequestDateTimeLocker = new object();
         public static object initLocker = new object();
 
+        //Список потоков
+        public static List<ConverterListener> converterListenerList = new List<ConverterListener>();
+
         public static void ProcessRequest(HttpListenerContext context)
         {
             //Console.WriteLine("Входящий запрос: {0}", DateTime.Now.ToString("MM/dd/yyyy hh:mm:ss.fff tt"));
@@ -247,7 +250,6 @@ namespace WindowsFormsApp1
         [STAThread]
         static void Main()
         {
-            
             converterAddress = Properties.Settings.Default.converterAddress.Trim();
             
             if (converterAddress.Length == 0) {
@@ -350,5 +352,12 @@ namespace WindowsFormsApp1
 
     public class GetControllersResponse {
         public List<ControllerInfoShort> items;
+    }
+
+    public class ConverterListener
+    {
+        public string id;
+        public string converterAddress;
+        public string listenPort;
     }
 }

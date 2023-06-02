@@ -14,6 +14,7 @@ using System.Threading;
 using ZGuard;
 using ZPort;
 using Z;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 //using ZGuard;
 
@@ -29,7 +30,7 @@ namespace WindowsFormsApp1
         //public static readonly ILog log = LogManager.GetLogger(typeof(Program));
 
 
-        public static readonly string[] CtrTypeStrs = {
+        /*public static readonly string[] CtrTypeStrs = {
                                                           "",
                                                           "Gate 2000",
                                                           "Matrix II Net",
@@ -43,20 +44,19 @@ namespace WindowsFormsApp1
                                                           "Matrix II Wi-Fi"
                                                       };
         public static readonly string[] KeyModeStrs = { "Touch Memory", "Proximity" };
-        public static int g_nCtrCount;
-
+        public static int g_nCtrCount;*/
 
         public Form1()
         {
             InitializeComponent();
         }
 
-        static bool EnumCtrsCB(ref ZG_FIND_CTR_INFO pInfo, int nPos, int nMax, IntPtr pUserData)
+        /*static bool EnumCtrsCB(ref ZG_FIND_CTR_INFO pInfo, int nPos, int nMax, IntPtr pUserData)
         {
             log.Info(CtrTypeStrs[(int)pInfo.nType] + ", адрес: " + pInfo.nAddr + ", с/н: " + pInfo.nSn + ", кл.: {5}, соб.: " + pInfo.nMaxEvents + ", " + KeyModeStrs[((pInfo.nFlags & ZGIntf.ZG_CTR_F_PROXIMITY) != 0) ? 1 : 0] + ";");
             g_nCtrCount++;
             return true;
-        }
+        }*/
 
         private static void listenerThreadWatcher()
         {
@@ -98,6 +98,13 @@ namespace WindowsFormsApp1
             var listenerThread = new Thread(listenerThreadWatcher);
             listenerThread.IsBackground = true;
             listenerThread.Start();
+
+            ConverterListener newConverterListener = new ConverterListener();
+            newConverterListener.id = Guid.NewGuid().ToString();
+            newConverterListener.converterAddress = "192.168.0.100:1000";
+            newConverterListener.listenPort = "27080";
+            Program.converterListenerList.Add(newConverterListener);
+            refreshConverterListenerListView();
         }
 
         private void label3_Click(object sender, EventArgs e)
@@ -127,6 +134,60 @@ namespace WindowsFormsApp1
                     }
                 }
             }
+        }
+
+        public void refreshConverterListenerListView() {
+            foreach (ConverterListener converterListener in Program.converterListenerList) {
+                ListViewItem newListItem = converterListenerListView.Items.Add(converterListener.converterAddress);
+                newListItem.Tag = converterListener.id;
+                ListViewItem.ListViewSubItem newSubItem = new ListViewItem.ListViewSubItem();
+                newSubItem.Text = converterListener.listenPort;
+                newListItem.SubItems.Add(newSubItem);
+             }
+        }
+
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+
+        private void converterListenerListView_MouseClick(object sender, MouseEventArgs e)
+        {
+            /*if (e.Button == MouseButtons.Right)
+            {
+                var focusedItem = converterListenerListView.FocusedItem;
+                if (focusedItem != null && focusedItem.Bounds.Contains(e.Location))
+                {
+                    удалитьToolStripMenuItem1.Visible = false;
+                    //converterListViewItemMenu.Show(Cursor.Position);
+                }
+                else {
+                    удалитьToolStripMenuItem1.Visible = true;
+                    //converterListViewItemMenu.Show(Cursor.Position);
+                    //converterListViewMenu.Show();
+                }
+            }*/
+        }
+
+        private void converterListenerListView_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void converterListViewMenu_Opening(object sender, CancelEventArgs e)
+        {
+                var focusedItem = converterListenerListView.FocusedItem;
+                //MessageBox.Show(converterListenerListView.SelectedItems.Count.ToString());
+                if (converterListenerListView.SelectedItems.Count > 0)
+                {
+                    удалитьToolStripMenuItem1.Visible = true;
+                    //converterListViewItemMenu.Show(Cursor.Position);
+                }
+                else
+                {
+                    удалитьToolStripMenuItem1.Visible = false;
+                    //converterListViewItemMenu.Show(Cursor.Position);
+                    //converterListViewMenu.Show();
+                }
         }
     }
 }

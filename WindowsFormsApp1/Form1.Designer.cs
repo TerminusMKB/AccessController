@@ -39,7 +39,22 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.button1 = new System.Windows.Forms.Button();
+            this.converterListenerListView = new System.Windows.Forms.ListView();
+            this.cAddress = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.pPort = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.converterListViewMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.добавитьКонвертерToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.удалитьToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.converterListViewItemMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.удалитьToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.programBindingSource = new System.Windows.Forms.BindingSource(this.components);
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.converterListViewMenu.SuspendLayout();
+            this.converterListViewItemMenu.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.programBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // timer1
@@ -58,10 +73,10 @@
             this.groupBox1.Controls.Add(this.label3);
             this.groupBox1.Controls.Add(this.label2);
             this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.groupBox1.Location = new System.Drawing.Point(4, 4);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(302, 93);
+            this.groupBox1.Size = new System.Drawing.Size(567, 93);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = " Статистика ";
@@ -140,11 +155,100 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Всего получено запросов:";
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.button1);
+            this.groupBox2.Controls.Add(this.converterListenerListView);
+            this.groupBox2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox2.Location = new System.Drawing.Point(4, 97);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(567, 321);
+            this.groupBox2.TabIndex = 1;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = " Конвертеры";
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(97, 202);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 1;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            // 
+            // converterListenerListView
+            // 
+            this.converterListenerListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.cAddress,
+            this.pPort});
+            this.converterListenerListView.ContextMenuStrip = this.converterListViewMenu;
+            this.converterListenerListView.FullRowSelect = true;
+            this.converterListenerListView.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+            this.converterListenerListView.HideSelection = false;
+            this.converterListenerListView.Location = new System.Drawing.Point(12, 66);
+            this.converterListenerListView.MultiSelect = false;
+            this.converterListenerListView.Name = "converterListenerListView";
+            this.converterListenerListView.Size = new System.Drawing.Size(515, 97);
+            this.converterListenerListView.TabIndex = 0;
+            this.converterListenerListView.UseCompatibleStateImageBehavior = false;
+            this.converterListenerListView.View = System.Windows.Forms.View.Details;
+            this.converterListenerListView.Click += new System.EventHandler(this.converterListenerListView_Click);
+            this.converterListenerListView.MouseClick += new System.Windows.Forms.MouseEventHandler(this.converterListenerListView_MouseClick);
+            // 
+            // cAddress
+            // 
+            this.cAddress.Text = "Адрес конвертера (IP:Port)";
+            this.cAddress.Width = 157;
+            // 
+            // pPort
+            // 
+            this.pPort.Text = "Порт прокси";
+            this.pPort.Width = 119;
+            // 
+            // converterListViewMenu
+            // 
+            this.converterListViewMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.добавитьКонвертерToolStripMenuItem,
+            this.удалитьToolStripMenuItem1});
+            this.converterListViewMenu.Name = "converterListViewMenu";
+            this.converterListViewMenu.Size = new System.Drawing.Size(187, 70);
+            this.converterListViewMenu.Opening += new System.ComponentModel.CancelEventHandler(this.converterListViewMenu_Opening);
+            // 
+            // добавитьКонвертерToolStripMenuItem
+            // 
+            this.добавитьКонвертерToolStripMenuItem.Name = "добавитьКонвертерToolStripMenuItem";
+            this.добавитьКонвертерToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            this.добавитьКонвертерToolStripMenuItem.Text = "Добавить конвертер";
+            // 
+            // удалитьToolStripMenuItem1
+            // 
+            this.удалитьToolStripMenuItem1.Name = "удалитьToolStripMenuItem1";
+            this.удалитьToolStripMenuItem1.Size = new System.Drawing.Size(186, 22);
+            this.удалитьToolStripMenuItem1.Text = "Удалить";
+            // 
+            // converterListViewItemMenu
+            // 
+            this.converterListViewItemMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.удалитьToolStripMenuItem});
+            this.converterListViewItemMenu.Name = "converterListViewItemMenu";
+            this.converterListViewItemMenu.Size = new System.Drawing.Size(119, 26);
+            // 
+            // удалитьToolStripMenuItem
+            // 
+            this.удалитьToolStripMenuItem.Name = "удалитьToolStripMenuItem";
+            this.удалитьToolStripMenuItem.Size = new System.Drawing.Size(118, 22);
+            this.удалитьToolStripMenuItem.Text = "Удалить";
+            // 
+            // programBindingSource
+            // 
+            this.programBindingSource.DataSource = typeof(WindowsFormsApp1.Program);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(310, 101);
+            this.ClientSize = new System.Drawing.Size(575, 422);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
@@ -156,6 +260,10 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.converterListViewMenu.ResumeLayout(false);
+            this.converterListViewItemMenu.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.programBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -172,6 +280,17 @@
         private System.Windows.Forms.Label labelRequestsCount;
         private System.Windows.Forms.Label labelListening;
         private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.ListView converterListenerListView;
+        private System.Windows.Forms.ColumnHeader cAddress;
+        private System.Windows.Forms.ColumnHeader pPort;
+        private System.Windows.Forms.BindingSource programBindingSource;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ContextMenuStrip converterListViewMenu;
+        private System.Windows.Forms.ToolStripMenuItem добавитьКонвертерToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip converterListViewItemMenu;
+        private System.Windows.Forms.ToolStripMenuItem удалитьToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem удалитьToolStripMenuItem1;
     }
 }
 
